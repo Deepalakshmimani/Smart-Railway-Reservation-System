@@ -1,0 +1,190 @@
+/* Profile.css */
+
+.profile-page {
+  min-height: 100vh;
+
+  background: #f1f5f9;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 40px 20px;
+}
+
+.profile-card {
+  width: 550px;
+  max-width: 100%;
+
+  background: white;
+
+  padding: 35px;
+
+  border-radius: 26px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+  animation: popup 0.35s ease;
+}
+
+/* Animation */
+
+@keyframes popup {
+
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Top Section */
+
+.profile-top {
+  display: flex;
+  align-items: center;
+
+  gap: 20px;
+
+  margin-bottom: 35px;
+}
+
+/* Profile Circle */
+
+.profile-image {
+  width: 80px;
+  height: 80px;
+
+  border-radius: 50%;
+
+  background: linear-gradient(
+    to right,
+    #2563eb,
+    #0ea5e9
+  );
+
+  color: white;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.profile-top h1 {
+  color: #0f172a;
+
+  margin-bottom: 6px;
+}
+
+.profile-top p {
+  color: #64748b;
+}
+
+/* Form */
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+
+  font-weight: 600;
+
+  color: #334155;
+}
+
+.form-group input,
+.form-group select {
+  padding: 14px;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 14px;
+
+  font-size: 15px;
+
+  outline: none;
+
+  transition: 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #2563eb;
+
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+}
+
+/* Disabled */
+
+.form-group input:disabled,
+.form-group select:disabled {
+  background: #f8fafc;
+
+  cursor: not-allowed;
+}
+
+/* Buttons */
+
+.profile-buttons {
+  margin-top: 30px;
+}
+
+.edit-btn,
+.save-btn {
+  width: 100%;
+
+  padding: 15px;
+
+  border: none;
+
+  border-radius: 14px;
+
+  color: white;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.3s;
+}
+
+.edit-btn {
+  background: linear-gradient(
+    to right,
+    #2563eb,
+    #0ea5e9
+  );
+}
+
+.save-btn {
+  background: linear-gradient(
+    to right,
+    #16a34a,
+    #22c55e
+  );
+}
+
+.edit-btn:hover,
+.save-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 20px rgba(37,99,235,0.2);
+}

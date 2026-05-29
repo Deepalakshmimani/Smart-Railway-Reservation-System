@@ -1,0 +1,190 @@
+/* AdminBookings.css */
+
+.admin-bookings-page {
+  width: 100%;
+}
+
+/* Top */
+
+.booking-top {
+  margin-bottom: 22px;
+}
+
+.booking-top h1 {
+  font-size: 28px;
+  font-weight: 700;
+
+  color: #0f172a;
+
+  margin-bottom: 4px;
+}
+
+.booking-top p {
+  color: #64748b;
+
+  font-size: 14px;
+}
+
+/* Grid */
+
+.booking-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fit, minmax(320px, 1fr));
+
+  gap: 18px;
+}
+
+/* Card */
+
+.booking-card {
+  background: white;
+
+  border-radius: 20px;
+
+  padding: 20px;
+
+  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+
+  transition: 0.3s;
+}
+
+.booking-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Header */
+
+.booking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  margin-bottom: 18px;
+}
+
+.booking-header h2 {
+  font-size: 22px;
+
+  color: #0f172a;
+
+  margin-bottom: 4px;
+}
+
+.booking-header span {
+  color: #64748b;
+
+  font-size: 12px;
+}
+
+/* Status */
+
+.status-badge {
+  padding: 6px 12px;
+
+  border-radius: 12px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.confirmed {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* Train Box */
+
+.train-box {
+  background: #f8fafc;
+
+  padding: 16px;
+
+  border-radius: 16px;
+
+  margin-bottom: 18px;
+}
+
+.train-box h3 {
+  color: #0f172a;
+
+  margin-bottom: 5px;
+}
+
+.train-box p {
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+/* Details */
+
+.details-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 16px;
+
+  margin-bottom: 20px;
+}
+
+.details-grid p {
+  color: #64748b;
+
+  font-size: 12px;
+
+  margin-bottom: 5px;
+}
+
+.details-grid h4 {
+  color: #0f172a;
+
+  font-size: 15px;
+}
+
+/* Footer */
+
+.booking-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.view-btn {
+  padding: 9px 15px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: linear-gradient(
+    to right,
+    #2563eb,
+    #0ea5e9
+  );
+
+  color: white;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.3s;
+}
+
+.view-btn:hover {
+  transform: translateY(-1px);
+}

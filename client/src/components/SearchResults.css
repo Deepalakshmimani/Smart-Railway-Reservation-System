@@ -1,0 +1,47 @@
+.results-section {
+  margin-left: 230px; /* sidebar */
+  padding: 20px;
+}
+
+.results-section h2 {
+  margin-bottom: 15px;
+}
+
+/* Card */
+.result-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f7fa;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* Sections */
+.left h3 {
+  margin: 0;
+}
+
+.left p {
+  margin: 5px 0 0;
+  color: #555;
+}
+
+.center {
+  font-weight: 500;
+}
+
+.right button {
+  background: #3b6cb7;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.right button:hover {
+  background: #2f5aa3;
+}

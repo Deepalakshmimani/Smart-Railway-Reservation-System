@@ -1,0 +1,190 @@
+.recommended {
+  padding: 25px;
+  margin-left: 230px;
+  background: #f5f7fb;
+}
+
+.recommended h2 {
+  margin-bottom: 25px;
+  font-size: 28px;
+  color: #1e293b;
+}
+
+/* Container */
+
+.train-container {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+/* Card */
+
+.train-card {
+  width: 340px;
+  background: #ffffff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.train-card:hover {
+  transform: translateY(-8px);
+}
+
+/* Image */
+
+.train-card img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+}
+
+/* Train Info */
+
+.train-info {
+  padding: 18px;
+}
+
+/* Top Row */
+
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.top-row h3 {
+  font-size: 20px;
+  color: #1e293b;
+}
+
+.rating {
+  background: #fff7ed;
+  color: #f97316;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+
+/* Route */
+
+.route {
+  margin-top: 12px;
+  font-size: 15px;
+  color: #334155;
+  font-weight: 500;
+}
+
+/* Timing Section */
+
+.timing {
+  margin-top: 18px;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 12px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+}
+
+.timing h4 {
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.timing span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.duration {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+/* Bottom Row */
+
+.bottom-row {
+  margin-top: 18px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Train Type */
+
+.type {
+  background: #dbeafe;
+  color: #2563eb;
+  padding: 6px 12px;
+  border-radius: 20px;
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Seats */
+
+.seats {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #16a34a;
+  align-items: center;
+}
+
+/* Price */
+
+.price-section {
+  text-align: right;
+}
+
+.price {
+  font-size: 24px;
+  color: #0f172a;
+  font-weight: bold;
+}
+
+.reason {
+  margin-top: 6px;
+  background: #ecfdf5;
+  color: #059669;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  display: inline-block;
+}
+
+/* Button */
+
+.book-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+.book-btn:hover {
+  transform: scale(1.03);
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}

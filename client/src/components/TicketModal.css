@@ -1,0 +1,234 @@
+/* TicketModal.css */
+
+.ticket-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(15, 23, 42, 0.72);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 1000;
+
+  padding: 20px;
+
+  backdrop-filter: blur(4px);
+
+  overflow-y: auto;
+}
+
+.ticket-modal {
+  width: 460px;
+  max-width: 100%;
+
+  max-height: 90vh;
+  overflow-y: auto;
+
+  background: #ffffff;
+
+  border-radius: 28px;
+
+  padding: 35px 30px;
+
+  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+
+  text-align: center;
+
+  animation: popup 0.35s ease;
+
+  color: #0f172a;
+}
+
+/* Popup animation */
+
+@keyframes popup {
+
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Heading */
+
+.ticket-modal h1 {
+  font-size: 32px;
+  font-weight: 700;
+
+  color: #0f172a;
+
+  margin-bottom: 22px;
+
+  letter-spacing: 1px;
+}
+
+/* Train Name */
+
+.ticket-modal h2 {
+  font-size: 28px;
+  font-weight: 700;
+
+  color: #2563eb;
+
+  margin-bottom: 8px;
+}
+
+/* General Text */
+
+.ticket-modal p {
+  font-size: 15px;
+  color: #334155;
+}
+
+/* Ticket Details Box */
+
+.ticket-info {
+  margin-top: 25px;
+
+  background: #f1f5f9;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 18px;
+
+  padding: 22px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Detail Row */
+
+.ticket-info p {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-size: 15px;
+  font-weight: 500;
+
+  color: #0f172a;
+
+  border-bottom: 1px solid #cbd5e1;
+
+  padding-bottom: 10px;
+}
+
+.ticket-info p:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* Labels */
+
+.ticket-info span:first-child {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Values */
+
+.ticket-info span:last-child {
+  color: #334155;
+}
+
+/* QR */
+
+.qr-section {
+  margin: 30px 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-section canvas {
+  padding: 12px;
+
+  background: white;
+
+  border-radius: 14px;
+
+  border: 1px solid #cbd5e1;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Buttons */
+
+.ticket-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+
+  flex-wrap: wrap;
+
+  margin-top: 10px;
+}
+
+.ticket-buttons button {
+  padding: 13px 22px;
+
+  border: none;
+  border-radius: 14px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+/* Download */
+
+.download-btn {
+  background: linear-gradient(
+    to right,
+    #0ea5e9,
+    #2563eb
+  );
+
+  color: white;
+}
+
+.download-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 18px rgba(37,99,235,0.25);
+}
+
+/* Close */
+
+.close-btn {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.close-btn:hover {
+  background: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+/* Scrollbar */
+
+.ticket-modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ticket-modal::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 10px;
+}
+
+.ticket-modal::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}

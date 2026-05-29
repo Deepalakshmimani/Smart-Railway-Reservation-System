@@ -1,0 +1,266 @@
+/* BookingPage.css */
+
+.booking-page {
+  min-height: 100vh;
+
+  background: #f1f5f9;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 40px 20px;
+}
+
+.booking-card {
+  width: 500px;
+  max-width: 100%;
+
+  background: white;
+
+  padding: 35px;
+
+  border-radius: 24px;
+
+  box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+
+  animation: popup 0.35s ease;
+}
+
+/* Animation */
+
+@keyframes popup {
+
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Heading */
+
+.booking-card h1 {
+  text-align: center;
+
+  margin-bottom: 28px;
+
+  color: #0f172a;
+
+  font-size: 34px;
+}
+
+/* Train Summary */
+
+.train-summary {
+  background: #f8fafc;
+
+  padding: 22px;
+
+  border-radius: 18px;
+
+  margin-bottom: 28px;
+
+  border: 1px solid #e2e8f0;
+}
+
+.train-summary h2 {
+  margin-bottom: 10px;
+
+  color: #0f172a;
+
+  font-size: 28px;
+}
+
+.train-summary p {
+  color: #475569;
+
+  margin-bottom: 16px;
+
+  line-height: 1.6;
+}
+
+.booking-info {
+  display: flex;
+  justify-content: space-between;
+
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  margin-bottom: 18px;
+
+  font-size: 14px;
+  color: #334155;
+}
+
+.price {
+  color: #2563eb;
+
+  font-size: 28px;
+  font-weight: 700;
+}
+
+/* Form */
+
+.booking-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+}
+
+.booking-form input,
+.booking-form select {
+  padding: 15px;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 14px;
+
+  font-size: 15px;
+
+  outline: none;
+
+  transition: 0.3s;
+}
+
+.booking-form input:focus,
+.booking-form select:focus {
+  border-color: #2563eb;
+
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+}
+
+/* Buttons */
+
+.booking-form button,
+.pay-btn,
+.my-booking-btn {
+  padding: 15px;
+
+  border: none;
+
+  border-radius: 14px;
+
+  background: linear-gradient(
+    to right,
+    #2563eb,
+    #0ea5e9
+  );
+
+  color: white;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.3s;
+}
+
+.booking-form button:hover,
+.pay-btn:hover,
+.my-booking-btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 20px rgba(37,99,235,0.25);
+}
+
+/* Payment Section */
+
+.payment-section {
+  text-align: center;
+}
+
+.payment-section h2 {
+  color: #0f172a;
+
+  margin-bottom: 25px;
+}
+
+.payment-box {
+  background: #f8fafc;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 18px;
+
+  padding: 24px;
+
+  margin-bottom: 25px;
+}
+
+.payment-box p {
+  display: flex;
+  justify-content: space-between;
+
+  margin-bottom: 15px;
+
+  color: #475569;
+
+  font-size: 15px;
+}
+
+.payment-box span {
+  font-weight: 600;
+
+  color: #0f172a;
+}
+
+.payment-total {
+  font-size: 18px !important;
+
+  font-weight: 700;
+
+  color: #16a34a !important;
+}
+
+/* Success Section */
+
+.booking-success {
+  text-align: center;
+}
+
+.booking-success h1 {
+  color: #16a34a;
+
+  margin-bottom: 15px;
+}
+
+.booking-success p {
+  color: #475569;
+
+  line-height: 1.7;
+}
+
+.success-box {
+  margin: 28px 0;
+
+  background: #dcfce7;
+
+  border-radius: 18px;
+
+  padding: 22px;
+
+  text-align: left;
+}
+
+.success-box p {
+  display: flex;
+  justify-content: space-between;
+
+  margin-bottom: 14px;
+
+  color: #166534;
+
+  font-weight: 500;
+}
+
+.success-box span {
+  font-weight: 700;
+}

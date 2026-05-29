@@ -1,0 +1,157 @@
+/* Common Reset */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+
+  font-family: 'Segoe UI',
+  Tahoma,
+  Geneva,
+  Verdana,
+  sans-serif;
+}
+
+/* Sidebar */
+
+.sidebar {
+  width: 230px;
+  height: 100vh;
+
+  background-color: #0f172a;
+
+  padding: 20px 15px;
+
+  position: fixed;
+
+  top: 0;
+  left: 0;
+}
+
+/* Sidebar Logo */
+
+.sidebar-logo {
+  margin-bottom: 35px;
+}
+
+.sidebar-logo-link {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: white;
+
+  text-decoration: none;
+
+  font-size: 26px;
+  font-weight: bold;
+
+  background: transparent;
+}
+
+
+
+.sidebar-logo-img {
+  width: 55px;
+  height: 55px;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  background: white;
+
+  flex-shrink: 0;
+}
+
+.sidebar-logo-text {
+  color: white;
+}
+
+/* Menu */
+
+.sidebar-menu {
+  list-style: none;
+}
+
+.sidebar-menu li {
+  width: 100%;
+
+  margin-bottom: 15px;
+}
+
+/* Links */
+
+.sidebar .menu-link {
+  width: 100%;
+  height: 55px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 20px;
+
+  background-color: white;
+
+  border-radius: 16px;
+
+  font-size: 17px;
+  font-weight: 600;
+
+  text-decoration: none;
+
+  color: #1e293b;
+
+  transition: all 0.3s ease;
+}
+
+/* Hover */
+
+.sidebar .menu-link:hover {
+  background-color: #e6f7fb;
+
+  color: #067d9b;
+
+  transform: translateX(5px);
+}
+
+/* Active */
+
+.menu-link.active {
+  background-color: #ffffff;
+
+  color: #067d9b;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Logout */
+
+.button-logout {
+  display: block;
+
+  height: 55px;
+  width: 100%;
+
+  padding: 0 20px;
+
+  background-color: white;
+  color: #ef4444;
+
+  border: none;
+  border-radius: 16px;
+
+  font-size: 17px;
+  font-weight: 600;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition: all 0.3s ease;
+}
+
+.button-logout:hover {
+  background: #fee2e2;
+}

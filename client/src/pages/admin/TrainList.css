@@ -1,0 +1,275 @@
+/* TrainList.css */
+
+.train-list-page {
+  width: 100%;
+}
+
+.train-top {
+  margin-bottom: 20px;
+}
+
+.train-top h1 {
+  font-size: 28px;
+  font-weight: 700;
+
+  color: #0f172a;
+}
+
+/* Grid */
+
+.train-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fit, minmax(340px, 1fr));
+
+  gap: 20px;
+}
+
+/* Card */
+
+.train-card {
+  background: white;
+
+  border-radius: 20px;
+
+  padding: 22px;
+
+  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+
+  transition: 0.3s;
+}
+
+.train-card:hover {
+  transform: translateY(-3px);
+}
+
+/* Top */
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  margin-bottom: 18px;
+}
+
+.card-top h2 {
+  font-size: 22px;
+
+  color: #0f172a;
+
+  margin-bottom: 4px;
+}
+
+.route {
+  color: #64748b;
+
+  font-size: 14px;
+}
+
+/* Status */
+
+.status-badge {
+  padding: 6px 12px;
+
+  border-radius: 14px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.available {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.delayed {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.maintenance {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+/* Time */
+
+.time-section {
+  display: flex;
+  gap: 14px;
+
+  margin-bottom: 18px;
+}
+
+.label {
+  font-size: 12px;
+
+  color: #64748b;
+
+  margin-bottom: 6px;
+}
+
+.time {
+  padding: 5px 10px;
+
+  border-radius: 14px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.departure {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.arrival {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+/* Days */
+
+.section {
+  margin-bottom: 18px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+
+  color: #334155;
+
+  margin-bottom: 10px;
+}
+
+.days-box {
+  display: flex;
+  gap: 6px;
+
+  flex-wrap: wrap;
+}
+
+.day-badge {
+  padding: 4px 8px;
+
+  background: #e0f2fe;
+
+  color: #0369a1;
+
+  border-radius: 10px;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Details */
+
+.details-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 16px;
+
+  margin-bottom: 18px;
+}
+
+.details-grid h4 {
+  font-size: 15px;
+
+  color: #0f172a;
+}
+
+/* Occupancy */
+
+.occupancy-section {
+  margin-bottom: 20px;
+}
+
+.occupancy-top {
+  display: flex;
+  justify-content: space-between;
+
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+
+  background: #e2e8f0;
+
+  border-radius: 20px;
+
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+
+  border-radius: 20px;
+
+  transition: 0.3s;
+}
+
+.progress-fill.low {
+  background: #22c55e;
+}
+
+.progress-fill.medium {
+  background: #f59e0b;
+}
+
+.progress-fill.high {
+  background: #ef4444;
+}
+
+/* Bottom */
+
+.card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price {
+  color: #0f172a;
+
+  font-size: 22px;
+}
+
+.update-btn {
+  padding: 9px 16px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: linear-gradient(
+    to right,
+    #2563eb,
+    #0ea5e9
+  );
+
+  color: white;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.3s;
+}
+
+.update-btn:hover {
+  transform: translateY(-1px);
+}

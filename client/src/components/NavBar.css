@@ -1,0 +1,182 @@
+/* Navbar */
+
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background-color: white;
+
+  padding: 12px 30px;
+
+  border-bottom: 1px solid #e5e5e5;
+
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+  margin-left: 230px;
+}
+
+/* Navigation Links */
+
+.navbar-links-list {
+  display: flex;
+
+  gap: 50px;
+
+  list-style: none;
+
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-links-item {
+  list-style: none;
+}
+
+/* Base Link */
+
+.navbar-link {
+  text-decoration: none;
+
+  color: #333;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  position: relative;
+
+  transition: color 0.3s ease;
+}
+
+/* Underline */
+
+.navbar-link::after {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  bottom: -5px;
+
+  width: 0%;
+  height: 3px;
+
+  background-color: #265b91;
+
+  transition: width 0.3s ease;
+}
+
+/* Hover */
+
+.navbar-link:hover {
+  color: #265b91;
+}
+
+.navbar-link:hover::after {
+  width: 100%;
+}
+
+/* Active */
+
+.navbar-link.active {
+  color: #265b91;
+}
+
+.navbar-link.active::after {
+  width: 100%;
+}
+
+/* Right Section */
+
+.navbar-right-section {
+  display: flex;
+  align-items: center;
+
+  gap: 20px;
+}
+
+/* Notification */
+
+.navbar-notification {
+  position: relative;
+
+  font-size: 24px;
+
+  cursor: pointer;
+
+  transition: transform 0.2s ease;
+}
+
+.navbar-notification:hover {
+  transform: scale(1.1);
+}
+
+/* Notification Badge */
+
+.navbar-notification-badge {
+  position: absolute;
+
+  top: -6px;
+  right: -8px;
+
+  background: red;
+
+  color: white;
+
+  font-size: 11px;
+
+  padding: 2px 6px;
+
+  border-radius: 50%;
+}
+
+/* Login Button */
+
+.navbar-auth-link {
+  text-decoration: none;
+
+  color: white;
+
+  background: linear-gradient(
+    135deg,
+    #265b91,
+    #3a7bd5
+  );
+
+  padding: 8px 20px;
+
+  border-radius: 25px;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  transition: all 0.3s ease;
+}
+
+.navbar-auth-link:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* Profile */
+
+.navbar-profile-wrapper {
+  cursor: pointer;
+}
+
+.navbar-profile-icon {
+  width: 50px;
+
+  position: relative;
+
+  font-size: 24px;
+
+  cursor: pointer;
+
+  transition: transform 0.2s ease;
+}
+
+.navbar-profile-icon:hover {
+  transform: scale(1.1);
+}
