@@ -24,7 +24,7 @@ A scalable backend system for a Train Ticket Booking Application built using **N
 ---
 
 # 🛠️ Tech Stack
-
+- **Frontend:** React JS 
 - **Backend:** Node.js, Express.js  
 - **Database:** MySQL  
 - **Authentication:** JWT  
