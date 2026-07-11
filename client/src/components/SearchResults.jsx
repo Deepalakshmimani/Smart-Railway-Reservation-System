@@ -14,10 +14,10 @@ const SearchResults = ({ results }) => {
         <p>No trains found 😢</p>
       ) : (
         results.map((train) => (
-          <div key={train.id} className="result-card">
+          <div key={train.schedule_id} className="result-card">
             <div className="left">
-              <h3>{train.name}</h3>
-              <p>{train.from} → {train.to}</p>
+              <h3>{train.train}</h3>
+              <p>{train.source} → {train.destination}</p>
             </div>
 
             <div className="center">
@@ -25,7 +25,7 @@ const SearchResults = ({ results }) => {
             </div>
 
             <div className="right">
-              <button  onClick={() => navigate(`/train/${train.id}`)}>View Details</button>
+              <button  onClick={() => navigate(`/coach-selection/${train.schedule_id}`)}>View Details</button>
             </div>
           </div>
         ))

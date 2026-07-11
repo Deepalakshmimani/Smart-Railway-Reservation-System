@@ -12,7 +12,9 @@ const AdminLogin = () => {
   const {
     isAdmin,
     setIsAdmin,
-    navigate
+    navigate,
+    axios,
+    backendUrl
   } = useAppContext();
 
   const [email, setEmail] =
@@ -21,30 +23,50 @@ const AdminLogin = () => {
   const [password, setPassword] =
     useState("");
 
-  const onSubmitHandler = (event) => {
+  const onSubmitHandler = async (event) => {
 
     event.preventDefault();
 
-    // Dummy Frontend Login
+    
 
-    if (
-      email === "admin@gmail.com" &&
-      password === "admin123"
-    ) {
+    try {
+
+    const { data } = await axios.post(
+
+      `${backendUrl}/api/admin/login`,
+
+      {
+        email,
+        password
+      },
+
+      {
+        withCredentials: true
+      }
+
+    );
+
+    if (data.success) {
 
       setIsAdmin(true);
-      navigate('/admin/dashboard')
 
-      toast.success(
-        "Admin Login Successful"
-      );
+      toast.success("Admin Login Successful");
+
+      navigate("/admin/dashboard");
 
     } else {
 
-      toast.error(
-        "Invalid Admin Credentials"
-      );
+      toast.error(data.message);
+
     }
+
+  } catch (error) {
+
+    console.log(error);
+
+    toast.error("Something went wrong");
+
+  }
   };
 
   

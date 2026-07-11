@@ -91,29 +91,6 @@ export const trains = [
     image: train1
   },
 
-  // {
-  //   id: 4,
-  //   trainNo: "12681",
-  //   name: "Coimbatore Intercity",
-
-  //   route: "Chennai → Coimbatore",
-
-  //   departure: "02:15 PM",
-  //   arrival: "09:30 PM",
-  //   duration: "7h 15m",
-
-  //   price: 520,
-
-  //   type: "Non-AC Seater",
-
-  //   availableSeats: 40,
-
-  //   rating: 4.3,
-
-  //   reason: "🛋 Comfortable Journey",
-
-  //   image: train4
-  // }
 ];
 
 

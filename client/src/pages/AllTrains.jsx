@@ -1,16 +1,27 @@
-import React from 'react'
-import Recommended from '../components/RecommendedTrains'
-import { allTrains } from '../assets/assets'
+
+
+
+import React, { useEffect } from "react";
+import TrainCardList from "../components/TrainCardList";
+import { useAppContext } from "../context/AppContext";
 
 const AllTrains = () => {
-  return (
-    <>
-   
-    <div>
-      <Recommended trains={allTrains}/>
-    </div>
-    </>
-  )
-}
 
-export default AllTrains
+    const {
+        allTrains,
+        fetchAllTrains
+    } = useAppContext();
+
+    useEffect(() => {
+        fetchAllTrains();
+    }, []);
+
+    return (
+        <TrainCardList
+            title="All Trains"
+            trains={allTrains}
+        />
+    );
+};
+
+export default AllTrains;

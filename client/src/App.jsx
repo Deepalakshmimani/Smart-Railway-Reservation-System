@@ -3,6 +3,10 @@ import Navbar from './components/NavBar'
 import Sidebar from './components/SideBar'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
+import CoachSelection from "./pages/CoachSelection";
+
+import SeatSelection from "./pages/SeatSelection";
+
 import Home from './pages/Home'
 import Footer from './components/Footer'
 import { useAppContext } from './context/AppContext'
@@ -27,6 +31,10 @@ import AddTrain from './pages/admin/AddTrain'
 import CoachManagement from './pages/admin/CoachTemplates'
 import AddCoach from './pages/admin/AddCoach'
 import Bookings from './pages/admin/Bookings'
+import AddStation from "./pages/admin/AddStation";
+import ManageStations from "./pages/admin/ManageStations";
+import PassengerDetails from './pages/PassengerDetails';
+
 
 const App = () => {
 
@@ -64,7 +72,29 @@ const App = () => {
           />
 
           <Route
-            path='/train/:id'
+              path="/book/:id"
+              element={<BookingPage/>}
+          />
+
+          <Route
+                path="/passenger-details"
+                element={<PassengerDetails />}
+            />
+
+         
+
+          <Route
+              path="/seat-selection/:scheduleId/:coachType"
+              element={<SeatSelection />}
+          />
+
+          <Route
+              path="/coach-selection/:trainId"
+              element={<CoachSelection />}
+          />
+
+          <Route
+            path='/train/:trainId'
             element={<TrainDetails />}
           />
 
@@ -130,6 +160,21 @@ const App = () => {
             />
 
             <Route
+                path='add-station'
+                element={<AddStation/>}
+            />
+
+            <Route
+                path="update-station/:id"
+                element={<AddStation/>}
+            />
+
+            <Route
+                path="stations"
+                element={<ManageStations/>}
+            />
+
+            <Route
               path='update-train/:id'
               element={<AddTrain/>}
             />
@@ -151,6 +196,8 @@ const App = () => {
               path='bookings'
               element={<Bookings/>}
             />
+
+            
 
           </Route>
 

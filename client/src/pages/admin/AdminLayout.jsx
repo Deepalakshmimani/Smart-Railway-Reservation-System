@@ -16,7 +16,8 @@ import {
   PlusSquare,
   Armchair,
   BookOpen,
-  LogOut
+  LogOut,
+  MapPinned
 } from "lucide-react";
 
 import { useAppContext }
@@ -68,6 +69,43 @@ const AdminLayout = () => {
               <LayoutDashboard size={20} />
 
               Dashboard
+
+            </NavLink>
+
+
+
+
+            {/* Manage Stations */}
+
+            <NavLink
+              to="/admin/dashboard/stations"
+              className={({ isActive }) =>
+                isActive
+                  ? "admin-link active"
+                  : "admin-link"
+              }
+            >
+
+              <MapPinned size={20} />
+
+              Manage Stations
+
+            </NavLink>
+
+            {/* Add Station */}
+
+            <NavLink
+              to="/admin/dashboard/add-station"
+              className={({ isActive }) =>
+                isActive
+                  ? "admin-link active"
+                  : "admin-link"
+              }
+            >
+
+              <PlusSquare size={20} />
+
+              Add Station
 
             </NavLink>
 

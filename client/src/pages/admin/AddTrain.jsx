@@ -13,103 +13,103 @@ import { useParams } from "react-router-dom";
 
 import { useAppContext } from "../../context/AppContext";
 
-/* Dummy Train Data */
 
-const trains = [
-
-  {
-    id: 1,
-    trainName: "Chennai Express",
-    trainNumber: "12601",
-    source: "Chennai",
-    destination: "Bangalore",
-    departure: "06:00",
-    arrival: "12:00",
-    acSleeperCoaches: 1,
-    sleeperCoaches: 2,
-    chairCoaches: 1,
-    generalCoaches: 1,
-    price: 450,
-    status: "Available",
-    runningDays: [
-      "Mon",
-      "Tue",
-      "Wed",
-      "Fri"
-    ]
-  },
-
-  {
-    id: 2,
-    trainName: "Madurai Superfast",
-    trainNumber: "12622",
-    source: "Chennai",
-    destination: "Madurai",
-    departure: "21:30",
-    arrival: "06:00",
-    acSleeperCoaches: 0,
-    sleeperCoaches: 3,
-    chairCoaches: 0,
-    generalCoaches: 2,
-    price: 620,
-    status: "Delayed",
-    runningDays: [
-      "Mon",
-      "Thu",
-      "Sat"
-    ]
-  }
-
-];
 
 const AddTrain = () => {
 
   const { id } = useParams();
 
-  const { navigate } =
-    useAppContext();
+  const {
+    navigate,
+    axios,
+    backendUrl
+} = useAppContext();
+
+  const [stations, setStations] = useState([]);
 
   const [trainData, setTrainData] =
     useState({
 
-      trainName: "",
-      trainNumber: "",
-      source: "",
-      destination: "",
-      departure: "",
-      arrival: "",
+      train_name: "",
 
-      acSleeperCoaches: 0,
-      sleeperCoaches: 0,
-      chairCoaches: 0,
-      generalCoaches: 0,
+      train_no: "",
 
-      price: "",
+      source_station_id: "",
+
+      destination_station_id: "",
+
+      departure_time: "",
+
+      arrival_time: "",
+
+      ac_sleeper_coaches: 0,
+      sleeper_coaches: 0,
+      chair_car_coaches: 0,
+      general_coaches: 0,
+
+      base_price: "",
 
       status: "Available",
 
-      runningDays: []
+      running_days:[]
 
     });
 
   /* Prefill Data */
+  const fetchTrain = async () => {
+
+      try {
+
+          const { data } = await axios.get(
+
+              `${backendUrl}/api/trains/${id}`,
+
+              {
+                  withCredentials: true
+              }
+
+          );
+
+          
+
+        if (data.success) {
+
+            setTrainData({
+
+                ...data.train,
+
+                departure_time:
+                    data.train.departure_time.slice(0,5),
+
+                arrival_time:
+                    data.train.arrival_time.slice(0,5)
+
+            });
+
+}
+
+          else {
+
+              console.log(data.message);
+
+          }
+
+      } catch (error) {
+
+          console.error(error);
+
+      }
+
+  };
+
 
   useEffect(() => {
 
-    if (id) {
+      if (id) {
 
-      const train =
-        trains.find(
-          item =>
-            item.id === Number(id)
-        );
-
-      if (train) {
-
-        setTrainData(train);
+          fetchTrain();
 
       }
-    }
 
   }, [id]);
 
@@ -129,13 +129,13 @@ const AddTrain = () => {
   const handleDayChange = (day) => {
 
     if (
-      trainData.runningDays.includes(day)
+      trainData.running_days.includes(day)
     ) {
 
       setTrainData({
         ...trainData,
-        runningDays:
-          trainData.runningDays.filter(
+        running_days:
+          trainData.running_days.filter(
             item => item !== day
           )
       });
@@ -144,8 +144,8 @@ const AddTrain = () => {
 
       setTrainData({
         ...trainData,
-        runningDays: [
-          ...trainData.runningDays,
+        running_days: [
+          ...trainData.running_days,
           day
         ]
       });
@@ -154,29 +154,98 @@ const AddTrain = () => {
 
   /* Submit */
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
 
     e.preventDefault();
 
-    if (id) {
+    try {
 
-      toast.success(
-        "Train Updated Successfully 🚆"
-      );
+        let data;
 
-    } else {
+        if (id) {
 
-      toast.success(
-        "Train Added Successfully 🚆"
-      );
+            const response = await axios.put(
+
+                `${backendUrl}/api/trains/update/${id}`,
+
+                trainData,
+
+                {
+                    withCredentials: true
+                }
+
+            );
+
+            data = response.data;
+
+        } else {
+
+            const response = await axios.post(
+
+                `${backendUrl}/api/trains/add`,
+
+                trainData,
+
+                {
+                    withCredentials: true
+                }
+
+            );
+
+            data = response.data;
+
+        }
+
+        if (data.success) {
+
+            toast.success(data.message);
+
+            navigate("/admin/dashboard/trains");
+
+        } else {
+
+            toast.error(data.message);
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
     }
 
-    console.log(trainData);
+};
 
-    navigate(
-      "/admin/dashboard/trains"
+
+const fetchStations = async () => {
+
+  try {
+
+    const { data } = await axios.get(
+      `${backendUrl}/api/stations/list`
     );
-  };
+
+    if (data.success) {
+
+      setStations(data.stations);
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+
+};
+
+
+useEffect(() => {
+
+    fetchStations();
+
+}, []);
+
 
   const days = [
 
@@ -218,6 +287,8 @@ const AddTrain = () => {
 
             </p>
 
+            
+
           </div>
 
           <div className="train-badge">
@@ -248,9 +319,9 @@ const AddTrain = () => {
 
                 <input
                   type="text"
-                  name="trainName"
+                  name="train_name"
                   placeholder="Enter train name"
-                  value={trainData.trainName}
+                  value={trainData.train_name}
                   onChange={handleChange}
                   required
                 />
@@ -265,9 +336,9 @@ const AddTrain = () => {
 
                 <input
                   type="text"
-                  name="trainNumber"
+                  name="train_no"
                   placeholder="Enter train number"
-                  value={trainData.trainNumber}
+                  value={trainData.train_no}
                   onChange={handleChange}
                   required
                 />
@@ -294,14 +365,32 @@ const AddTrain = () => {
                   Source
                 </label>
 
-                <input
-                  type="text"
-                  name="source"
-                  placeholder="Starting city"
-                  value={trainData.source}
-                  onChange={handleChange}
-                  required
-                />
+                <select
+                    name="source_station_id"
+                    value={trainData.source_station_id}
+                    onChange={handleChange}
+                >
+
+                    <option value="">
+
+                        Select Source Station
+
+                    </option>
+
+                    {stations.map((station) => (
+
+                        <option
+                            key={station.station_id}
+                            value={station.station_id}
+                        >
+
+                            {station.station_name}
+
+                        </option>
+
+                    ))}
+
+                </select>
 
               </div>
 
@@ -311,14 +400,32 @@ const AddTrain = () => {
                   Destination
                 </label>
 
-                <input
-                  type="text"
-                  name="destination"
-                  placeholder="Destination city"
-                  value={trainData.destination}
-                  onChange={handleChange}
-                  required
-                />
+                <select
+                    name="destination_station_id"
+                    value={trainData.destination_station_id}
+                    onChange={handleChange}
+                >
+
+                    <option value="">
+
+                        Select Destination Station
+
+                    </option>
+
+                    {stations.map((station) => (
+
+                        <option
+                            key={station.station_id}
+                            value={station.station_id}
+                        >
+
+                            {station.station_name}
+
+                        </option>
+
+                    ))}
+
+                </select>
 
               </div>
 
@@ -344,8 +451,8 @@ const AddTrain = () => {
 
                 <input
                   type="time"
-                  name="departure"
-                  value={trainData.departure}
+                  name="departure_time"
+                  value={trainData.departure_time}
                   onChange={handleChange}
                   required
                 />
@@ -360,8 +467,8 @@ const AddTrain = () => {
 
                 <input
                   type="time"
-                  name="arrival"
-                  value={trainData.arrival}
+                  name="arrival_time"
+                  value={trainData.arrival_time}
                   onChange={handleChange}
                   required
                 />
@@ -373,6 +480,11 @@ const AddTrain = () => {
           </div>
 
           {/* Coach Configuration */}
+          {id && (
+              <p className="info-text">
+                Coach configuration and base price cannot be modified after a train is created.
+              </p>
+            )}
 
           <div className="coach-section">
 
@@ -390,9 +502,10 @@ const AddTrain = () => {
 
                 <input
                   type="number"
-                  name="acSleeperCoaches"
+                  disabled={!!id}
+                  name="ac_sleeper_coaches"
                   value={
-                    trainData.acSleeperCoaches
+                    trainData.ac_sleeper_coaches
                   }
                   onChange={handleChange}
                   min="0"
@@ -408,9 +521,10 @@ const AddTrain = () => {
 
                 <input
                   type="number"
-                  name="sleeperCoaches"
+                  disabled={!!id}
+                  name="sleeper_coaches"
                   value={
-                    trainData.sleeperCoaches
+                    trainData.sleeper_coaches
                   }
                   onChange={handleChange}
                   min="0"
@@ -426,9 +540,10 @@ const AddTrain = () => {
 
                 <input
                   type="number"
-                  name="chairCoaches"
+                  disabled={!!id}
+                  name="chair_car_coaches"
                   value={
-                    trainData.chairCoaches
+                    trainData.chair_car_coaches
                   }
                   onChange={handleChange}
                   min="0"
@@ -444,9 +559,10 @@ const AddTrain = () => {
 
                 <input
                   type="number"
-                  name="generalCoaches"
+                  disabled={!!id}
+                  name="general_coaches"
                   value={
-                    trainData.generalCoaches
+                    trainData.general_coaches
                   }
                   onChange={handleChange}
                   min="0"
@@ -458,7 +574,7 @@ const AddTrain = () => {
 
           </div>
 
-          {/* Price & Status */}
+          {/* base_price & Status */}
 
           <div className="form-section">
 
@@ -476,9 +592,10 @@ const AddTrain = () => {
 
                 <input
                   type="number"
-                  name="price"
-                  placeholder="Enter price"
-                  value={trainData.price}
+                  disabled={!!id}
+                  name="base_price"
+                  placeholder="Enter base_price"
+                  value={trainData.base_price}
                   onChange={handleChange}
                   required
                 />
@@ -537,7 +654,7 @@ const AddTrain = () => {
                   type="button"
                   key={day}
                   className={
-                    trainData.runningDays.includes(
+                    trainData.running_days.includes(
                       day
                     )
                       ? "day-btn active"
@@ -570,6 +687,8 @@ const AddTrain = () => {
               : "Add Train"}
 
           </button>
+
+          
 
         </form>
 

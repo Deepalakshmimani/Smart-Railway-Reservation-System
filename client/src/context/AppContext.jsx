@@ -1,35 +1,120 @@
 import { createContext,useContext,useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { allTrains } from "../assets/assets";
+import axios from "axios";
 
 export const AppContext=createContext();
 
 export const AppCotextProvider=({children})=>
 {
+
+  const backendUrl = "http://localhost:4000";
   const navigate=useNavigate();
   const[user,setUser]=useState(null);
   const[isadmin,setIsAdmin]=useState(null);
   const[showUserLogin,setShowUserLogin]=useState(null);
   const[results,setResults]=useState([]);
+  const [allTrains, setAllTrains] = useState([]);
   const[selectedDate,setSelectedDate]=useState("");
   const[showTicket,setShowTicket]=useState(null);
+  const [recommendedTrains, setRecommendedTrains] = useState([]);
+  
 
-  const handleSearch = (formData) => {
-    console.log("Searching..", formData);
+  const handleSearch = async (formData) => {
 
-    if (!formData.from || !formData.to || !formData.date) {
-      alert("Please fill all fields");
-      return;
+  console.log("Searching...", formData);
+
+  if (!formData.from || !formData.to || !formData.date) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  try {
+
+    const { data } = await axios.get(
+
+      `${backendUrl}/api/trains/search`,
+
+      {
+        params: {
+          from: formData.from,
+          to: formData.to,
+          date: formData.date
+        }
+      }
+
+    );
+
+    if (data.success) {
+
+      setResults(data.trains);
+
+      setSelectedDate(formData.date);
+
+    } else {
+
+      alert(data.message);
+
     }
 
-    const filtered = allTrains.filter((train) =>
-      train.from.toLowerCase().includes(formData.from.toLowerCase()) &&
-      train.to.toLowerCase().includes(formData.to.toLowerCase())
+  } catch (error) {
+
+    console.log(error);
+
+    alert("Something went wrong");
+
+  }
+
+};
+
+const fetchRecommendedTrains = async () => {
+
+    try {
+
+        const { data } = await axios.get(
+
+            `${backendUrl}/api/trains/recommended`
+
+        );
+
+        if (data.success) {
+
+            setRecommendedTrains(data.trains);
+
+        }
+
+    } catch (error) {
+
+        console.log(error);
+
+    }
+
+};
+
+
+const fetchAllTrains = async () => {
+
+  try {
+
+    const { data } = await axios.get(
+
+      `${backendUrl}/api/trains/list`
+
     );
-   
-    setSelectedDate(formData.date);
-    setResults(filtered);
-  };
+
+    if (data.success) {
+
+      setAllTrains(data.trains);
+
+    }
+
+  } catch (error) {
+
+    console.log(error);
+
+  }
+
+};
 
 
   const value={
@@ -46,7 +131,15 @@ export const AppCotextProvider=({children})=>
     selectedDate,
     setSelectedDate,
     showTicket,
-    setShowTicket
+    setShowTicket,
+    axios,
+    backendUrl,
+    allTrains,
+    setAllTrains,
+    fetchAllTrains,
+    recommendedTrains,
+    setRecommendedTrains,
+    fetchRecommendedTrains
   }
 
   return <AppContext.Provider value={value}>

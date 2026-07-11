@@ -16,7 +16,9 @@ const Login = () => {
   const {
     setShowUserLogin,
     setUser,
-    navigate
+    navigate,
+    backendUrl,
+    axios
   } = useAppContext();
 
   const onSubmitHandler = async (event) => {
@@ -33,22 +35,85 @@ const Login = () => {
       return;
     }
 
-    setUser({
-      email: email,
-      name: state === "register"
-        ? name
-        : "Deepa"
-    });
+    try {
 
-    toast.success(
-      state === "login"
-        ? "Login Successful 🎉"
-        : "Account Created Successfully 🎉"
-    );
+      if (state === "register") {
 
-    setShowUserLogin(false);
+        const { data } = await axios.post(
 
-    navigate("/");
+          `${backendUrl}/api/user/register`,
+
+          {
+            name,
+            email,
+            password
+          },
+
+          {
+            withCredentials: true
+          }
+        );
+
+        if (data.success) {
+
+          setUser(data.user);
+
+          toast.success("Account Created Successfully 🎉");
+
+          setShowUserLogin(false);
+
+          navigate("/");
+
+        } else {
+
+          toast.error(data.message);
+        }
+
+      }
+
+      else {
+
+        const { data } = await axios.post(
+
+          `${backendUrl}/api/user/login`,
+
+          {
+            email,
+            password
+          },
+
+          {
+            withCredentials: true
+          }
+        );
+
+        if (data.success) {
+
+          setUser(data.user);
+
+          toast.success("Login Successful 🎉");
+
+          setShowUserLogin(false);
+
+          navigate("/");
+
+        } else {
+
+          toast.error(data.message);
+        }
+
+      }
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      toast.error("Something went wrong");
+
+    }
+
   };
 
   return (

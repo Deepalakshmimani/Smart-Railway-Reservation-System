@@ -36,12 +36,43 @@ export const addTrain =
         chair_car_coaches,
         general_coaches,
 
-        ac_sleeper_price,
-        sleeper_price,
-        chair_car_price,
-        general_price
+        base_price
 
       } = req.body;
+
+
+      const PRICE_MULTIPLIER = {
+
+          GENERAL:1,
+
+          CHAIR_CAR:1.25,
+
+          SLEEPER:1.5,
+
+          AC_SLEEPER:2.2
+
+      };
+
+
+      const general_price =
+      Number(base_price)
+      *
+      PRICE_MULTIPLIER.GENERAL;
+
+      const chair_car_price =
+      Number(base_price)
+      *
+      PRICE_MULTIPLIER.CHAIR_CAR;
+
+      const sleeper_price =
+      Number(base_price)
+      *
+      PRICE_MULTIPLIER.SLEEPER;
+
+      const ac_sleeper_price =
+      Number(base_price)
+      *
+      PRICE_MULTIPLIER.AC_SLEEPER;
 
       /* Validation */
 
@@ -91,7 +122,7 @@ export const addTrain =
 
       
       /* Insert Train */
-
+      
       const [trainResult] =
         await connection.execute(
 
@@ -216,122 +247,86 @@ export const addTrain =
 
 /* GET TRAINS */
 
-export const getTrains =
-async (req, res) => {
-
+export const getTrains = async (req, res) => {
   try {
 
-    const [trains] =
-    await db.execute(
+    const isActive =
+  req.query.is_active === undefined
+    ? true
+    : req.query.is_active === "true";
 
+    console.log("isActive:", isActive);
+    const [trains] = await db.execute(
       `
       SELECT
-
         t.train_id,
-
+        
         t.train_name,
-
         t.train_no,
-
         t.departure_time,
-
         t.arrival_time,
-
+        t.running_days,
+        t.is_active,
         t.rating,
-
-        s1.station_name
-        AS source_station,
-
-        s2.station_name
-        AS destination_station,
-
-        MIN(c.base_price)
-        AS starting_price,
-
-        GROUP_CONCAT(
-          DISTINCT c.coach_type
-        )
-        AS coach_types
-
+        s1.station_name AS source_station,
+        s2.station_name AS destination_station,
+        MIN(c.base_price) AS starting_price,
+        GROUP_CONCAT(DISTINCT c.coach_type) AS coach_types,
+        COUNT(DISTINCT c.coach_id) AS coaches,
+        SUM(c.total_seats) AS total_seats
       FROM trains t
-
-      JOIN stations s1
-      ON t.source_station_id =
-      s1.station_id
-
-      JOIN stations s2
-      ON t.destination_station_id =
-      s2.station_id
-
-      JOIN coaches c
-      ON c.train_id =
-      t.train_id
-
-      WHERE t.is_active = true
-
+      
+      JOIN stations s1 ON t.source_station_id = s1.station_id
+      JOIN stations s2 ON t.destination_station_id = s2.station_id
+      JOIN coaches c ON c.train_id = t.train_id
+  
+      WHERE t.is_active = ?
       GROUP BY t.train_id
-      `
+      `,[isActive]
     );
 
-    /* Duration */
+    /* Duration & Formatting */
+    const formatted = trains.map((train) => {
+      const departure = new Date(`1970-01-01T${train.departure_time}`);
+      const arrival = new Date(`1970-01-01T${train.arrival_time}`);
 
-    const formatted =
-    trains.map((train) => {
-
-      const departure =
-      new Date(
-        `1970-01-01T${train.departure_time}`
-      );
-
-      const arrival =
-      new Date(
-        `1970-01-01T${train.arrival_time}`
-      );
-
-      let diff =
-      (arrival - departure)
-      / (1000 * 60);
+      let diff = (arrival - departure) / (1000 * 60);
 
       /* Overnight Train */
-
       if (diff < 0) {
-
         diff += 24 * 60;
       }
 
-      const hours =
-      Math.floor(diff / 60);
-
-      const minutes =
-      diff % 60;
-
+      const hours = Math.floor(diff / 60);
+      const minutes = diff % 60;
+      
       return {
 
-        ...train,
+          ...train,
 
-        duration:
-        `${hours}h ${minutes}m`
+          duration: `${hours}h ${minutes}m`,
+
+          runningDays: train.running_days || [],
+
+          status: train.is_active ? "Available" : "Cancelled",
+
+          coaches: train.coaches,
+
+          totalSeats: train.total_seats
+
       };
     });
 
     return res.json({
-
       success: true,
-
       trains: formatted
-
     });
 
   } catch (error) {
-
-    console.log(error);
-
+    console.error(error);
     return res.json({
-
       success: false,
-
       message: error.message
-
     });
   }
 };
@@ -423,12 +418,32 @@ async (req, res) => {
 
       [from, to, date]
     );
+    
 
+
+    const formatted = trains.map((train) => ({
+
+      ...train,
+
+      train: train.train_name,
+
+      source: train.source_station,
+
+      destination: train.destination_station,
+
+      departure: train.departure_time,
+
+      arrival: train.arrival_time
+
+    }));
+
+
+    console.log(formatted);
     return res.json({
 
       success: true,
 
-      trains
+      trains: formatted
 
     });
 
@@ -455,12 +470,46 @@ async (req, res) => {
 
   try {
 
-    const { scheduleId } =
+    const { trainId } =
     req.params;
 
-    /* =========================
-       TRAIN DETAILS
-    ========================= */
+
+    const [scheduleRows] = await db.execute(
+
+        `
+        SELECT
+
+            schedule_id,
+            travel_date
+
+        FROM train_schedule
+
+        WHERE train_id = ?
+
+        ORDER BY travel_date
+
+        LIMIT 1
+        `,
+
+        [trainId]
+
+    );
+
+    if (scheduleRows.length === 0) {
+
+        return res.json({
+
+            success: false,
+
+            message: "No schedule found"
+
+        });
+
+    }
+
+    const scheduleId = scheduleRows[0].schedule_id;
+
+    
 
     const [trainRows] =
     await db.execute(
@@ -477,6 +526,8 @@ async (req, res) => {
         t.train_name,
 
         t.train_no,
+
+        t.rating,
 
         t.departure_time,
 
@@ -568,6 +619,7 @@ async (req, res) => {
 
     const train =
     trainRows[0];
+    train.schedule_id = scheduleId;
 
     const departure =
     new Date(
@@ -603,6 +655,7 @@ async (req, res) => {
        COACH DETAILS
     ========================= */
 
+
     const [coachRows] =
     await db.execute(
 
@@ -611,37 +664,35 @@ async (req, res) => {
 
         c.coach_type,
 
-        c.base_price,
+        MIN(c.base_price) AS base_price,
 
-        COUNT(
-          CASE
-          WHEN sa.status =
-          'AVAILABLE'
-          THEN 1
-          END
-        )
-        AS available_seats
+        COUNT(DISTINCT c.coach_id) AS coaches,
 
-      FROM coaches c
+        SUM(
+            CASE
+                WHEN sa.status = 'AVAILABLE'
+                THEN 1
+                ELSE 0
+            END
+        ) AS available_seats
 
-      JOIN seats se
-      ON se.coach_id =
-      c.coach_id
+    FROM coaches c
 
-      JOIN seat_availability sa
-      ON sa.seat_id =
-      se.seat_id
+    JOIN seats se
+    ON se.coach_id = c.coach_id
 
-      WHERE
+    JOIN seat_availability sa
+    ON sa.seat_id = se.seat_id
 
-      sa.schedule_id = ?
+    WHERE
+        sa.schedule_id = ?
+        AND c.train_id = ?
 
-      AND c.train_id = ?
+    GROUP BY
+        c.coach_type
 
-      GROUP BY
-
-      c.coach_type,
-      c.base_price
+    ORDER BY
+        MIN(c.base_price);
       `,
 
       [
@@ -649,6 +700,21 @@ async (req, res) => {
         train.train_id
       ]
     );
+
+
+    train.coaches = coachRows.length;
+
+    train.totalSeats = coachRows.reduce(
+
+        (sum, coach) =>
+
+            sum + Number(coach.available_seats),
+
+        0
+
+    );
+
+    train.status = "Available";
 
     /* =========================
        RESPONSE
@@ -678,4 +744,349 @@ async (req, res) => {
 
     });
   }
+};
+
+
+
+export const getRecommendedTrains = async (req, res) => {
+
+    try {
+
+        const [trains] = await db.execute(
+
+            `
+            SELECT
+
+                t.train_id,
+                t.train_name,
+                t.train_no,
+                t.departure_time,
+                t.arrival_time,
+                t.rating,
+
+                s1.station_name AS source_station,
+                s2.station_name AS destination_station,
+
+                MIN(c.base_price) AS starting_price,
+
+                GROUP_CONCAT(DISTINCT c.coach_type) AS coach_types,
+
+                COUNT(DISTINCT c.coach_id) AS coaches,
+
+                SUM(c.total_seats) AS totalSeats
+
+            FROM trains t
+
+            JOIN stations s1
+                ON t.source_station_id = s1.station_id
+
+            JOIN stations s2
+                ON t.destination_station_id = s2.station_id
+
+            JOIN coaches c
+                ON c.train_id = t.train_id
+
+            WHERE t.is_active = true
+
+            GROUP BY t.train_id
+
+            ORDER BY RAND()
+
+            LIMIT 3
+            `
+        );
+
+        const formatted = trains.map((train) => {
+
+            const departure =
+                new Date(`1970-01-01T${train.departure_time}`);
+
+            const arrival =
+                new Date(`1970-01-01T${train.arrival_time}`);
+
+            let diff =
+                (arrival - departure) / (1000 * 60);
+
+            if (diff < 0) {
+
+                diff += 24 * 60;
+
+            }
+
+            const hours = Math.floor(diff / 60);
+            const minutes = diff % 60;
+
+            return {
+
+                ...train,
+
+                duration: `${hours}h ${minutes}m`
+
+            };
+
+        });
+
+        return res.json({
+
+            success: true,
+
+            trains: formatted
+
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        return res.json({
+
+            success: false,
+
+            message: error.message
+
+        });
+
+    }
+
+};
+// Update Train
+
+export const updateTrain = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const {
+
+      train_name,
+      train_no,
+
+      source_station_id,
+      destination_station_id,
+
+      departure_time,
+      arrival_time,
+
+      running_days
+
+    } = req.body;
+
+    await db.execute(
+
+      `UPDATE trains
+       SET
+
+       train_name = ?,
+       train_no = ?,
+
+       source_station_id = ?,
+       destination_station_id = ?,
+
+       departure_time = ?,
+       arrival_time = ?,
+
+       running_days = ?
+
+       WHERE train_id = ?`,
+
+      [
+
+        train_name,
+        train_no,
+
+        source_station_id,
+        destination_station_id,
+
+        departure_time,
+        arrival_time,
+
+        JSON.stringify(running_days),
+
+        id
+
+      ]
+
+    );
+
+    return res.json({
+
+      success: true,
+
+      message: "Train Updated Successfully"
+
+    });
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    return res.json({
+
+      success: false,
+
+      message: error.message
+
+    });
+
+  }
+
+};
+
+
+// Get Train By ID (Admin)
+
+export const getTrainById = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const [rows] = await db.execute(
+
+      `SELECT *
+       FROM trains
+       WHERE train_id = ?`,
+
+      [id]
+
+    );
+
+    if (rows.length === 0) {
+
+      return res.json({
+
+        success: false,
+
+        message: "Train not found"
+
+      });
+
+    }
+
+    const train = rows[0];
+
+    return res.json({
+
+      success: true,
+
+      train: {
+
+        ...train,
+
+        running_days:
+          train.running_days || []
+
+      }
+
+    });
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    return res.json({
+
+      success: false,
+
+      message: error.message
+
+    });
+
+  }
+
+};
+
+
+// Delete Train (Soft Delete)
+
+export const deleteTrain = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    await db.execute(
+
+      `UPDATE trains
+       SET is_active = false
+       WHERE train_id = ?`,
+
+      [id]
+
+    );
+
+    return res.json({
+
+      success: true,
+
+      message: "Train Deleted Successfully"
+
+    });
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    return res.json({
+
+      success: false,
+
+      message: error.message
+
+    });
+
+  }
+
+};
+
+
+export const restoreTrain = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+    console.log("Route Param:", id);
+
+    const [result]=await db.execute(
+
+      `UPDATE trains
+       SET is_active = true
+       WHERE train_id = ?`,
+
+      [id]
+
+    );
+    console.log(result);
+
+    return res.json({
+
+      success: true,
+
+      message: "Train Restored Successfully"
+
+    });
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    return res.json({
+
+      success: false,
+
+      message: error.message
+
+    });
+
+  }
+
 };

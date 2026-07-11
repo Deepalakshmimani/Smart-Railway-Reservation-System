@@ -13,11 +13,55 @@ export const addStation=async (req,res) => {
       return res.json({success:false, message:"Missing Details"});
     }
 
-    const [exisiting]=await db.execute(`SELECT * FROM stations WHERE station_code=?`,[station_code]);
+    const [existing] = await db.execute(
 
-    if(exisiting.length>0)
-    {
-      return res.json({success:false, message:"Stations already exists"});
+        `SELECT *
+        FROM stations
+        WHERE station_code = ?`,
+
+        [station_code]
+
+    );
+
+    if (existing.length > 0) {
+
+        if (!existing[0].is_active) {
+
+            await db.execute(
+
+                `UPDATE stations
+                SET
+                station_name = ?,
+                is_active = true
+                WHERE station_id = ?`,
+
+                [
+                    station_name,
+                    existing[0].station_id
+                ]
+
+            );
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Station Restored Successfully"
+
+            });
+
+        }
+
+        return res.json({
+
+            success: false,
+
+            message:
+                "Station Already Exists"
+
+        });
+
     }
 
     await db.execute(`INSERT INTO stations (station_name,station_code) VALUES (?,?)`,[station_name,station_code]);

@@ -1,0 +1,91 @@
+.admin-table-container{
+
+    padding:30px;
+
+}
+
+.admin-table-title{
+
+    font-size:32px;
+
+    margin-bottom:25px;
+
+}
+
+.admin-table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+.admin-table th{
+
+    background:#1f2937;
+
+    color:white;
+
+    padding:14px;
+
+    text-align:left;
+
+}
+
+.admin-table td{
+
+    padding:14px;
+
+    border-bottom:1px solid #ddd;
+
+}
+
+.admin-table tr:hover{
+
+    background:#f8f8f8;
+
+}
+
+.edit-button{
+
+    background:#2563eb;
+
+    color:white;
+
+    border:none;
+
+    padding:8px 16px;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+    margin-right:10px;
+
+}
+
+.delete-btn{
+
+    background:#dc2626;
+
+    color:white;
+
+    border:none;
+
+    padding:8px 16px;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+}
+
+.action-buttons{
+
+    display:flex;
+
+    gap:10px;
+
+    align-items:center;
+
+}

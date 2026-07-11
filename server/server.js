@@ -15,6 +15,7 @@ import { bookingRouter } from './routes/bookingRoute.js';
 import paymentRouter from './routes/paymentRoutes.js';
 import notificationRouter from './routes/notificationRoute.js';
 import feedbackRouter from './routes/feedbackRoute.js';
+import seatRouter from './routes/seatRoutes.js';
 const app=express();
 const port=process.env.PORT || 4000;
 
@@ -55,6 +56,7 @@ app.use("/api/booking" ,bookingRouter);
 app.use("/api/payment" ,paymentRouter);
 app.use("/api/notifications",notificationRouter);
 app.use("/api/feedback",feedbackRouter);
+app.use("/api/seats", seatRouter);
 
 
 releaseExpiredBookings();
