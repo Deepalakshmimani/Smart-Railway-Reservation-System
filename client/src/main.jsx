@@ -6,6 +6,10 @@ import App from './App.jsx'
 import {BrowserRouter} from 'react-router-dom'
 import { AppCotextProvider } from './context/AppContext.jsx'
 
+import axios from "axios";
+
+axios.defaults.withCredentials = true;
+
 createRoot(document.getElementById('root')).render(
   
   <BrowserRouter>

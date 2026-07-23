@@ -9,7 +9,8 @@ import {
   getTrainById,
   deleteTrain,
   restoreTrain,
-  getRecommendedTrains
+  getRecommendedTrains,
+  getTrainSchedules,
 } from "../controllers/trainController.js";
 
 import {authAdmin} from "../middlewares/authAdmin.js";
@@ -56,16 +57,23 @@ trainRouter.get(
     getRecommendedTrains
 );
 
-
+trainRouter.get(
+    "/:trainId/schedules",
+    getTrainSchedules
+);
 
 trainRouter.get(
   "/search",
   searchTrains
 );
 
+
 trainRouter.get(
-  "/train/:trainId",
-   getTrainDetails
+
+    "/schedule/:scheduleId",
+
+    getTrainDetails
+
 );
 
 

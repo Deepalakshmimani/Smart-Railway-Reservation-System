@@ -16,6 +16,8 @@ const SeatSelection = () => {
 
     const location = useLocation();
 
+    const travelDate =location.state?.travelDate;
+
     const { axios, backendUrl, navigate } = useAppContext();
 
     const price = Number(location.state?.price || 0);
@@ -134,6 +136,37 @@ const SeatSelection = () => {
                     Coach Type : {coachType.replaceAll("_", " ")}
 
                 </h2>
+
+
+                <h3>
+
+                    Travel Date :
+
+                    {
+
+                        new Date(
+
+                            travelDate
+
+                        ).toLocaleDateString(
+
+                            "en-IN",
+
+                            {
+
+                                day:"2-digit",
+
+                                month:"short",
+
+                                year:"numeric"
+
+                            }
+
+                        )
+
+                    }
+
+                </h3>
 
                 <h3>
 
