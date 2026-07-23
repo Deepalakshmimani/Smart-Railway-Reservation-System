@@ -1,12 +1,18 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useAppContext } from "../context/AppContext";
 import "./PassengerDetails.css";
+import toast from "react-hot-toast";
 
 const PassengerDetails = () => {
 
     const location = useLocation();
 
+    const { axios, backendUrl,navigate } = useAppContext();
+
     const {
+
+        scheduleId,
 
         coachType,
 
@@ -40,6 +46,127 @@ const PassengerDetails = () => {
 
     };
 
+    const handleProceed = async () => {
+
+        for (let i = 0; i < passengers.length; i++) {
+
+            const passenger = passengers[i];
+
+            if (!passenger.name.trim()) {
+
+                toast.error(`Please enter Passenger ${i + 1} Name`);
+
+                return;
+
+            }
+
+            if (
+
+                passenger.age === "" ||
+
+                passenger.age < 1 ||
+
+                passenger.age > 120
+
+            ) {
+
+                toast.error(
+
+                    `Please enter a valid age for Passenger ${i + 1}`
+
+                );
+
+                return;
+
+            }
+
+            if (!passenger.gender) {
+
+                toast.error(
+
+                    `Please select Gender for Passenger ${i + 1}`
+
+                );
+
+                return;
+
+            }
+
+        }
+
+        try {
+
+            // Send only availability ids
+            const availabilityIds = selectedSeats.map(
+
+                seat => seat.availability_id
+
+            );
+
+            console.log("Availability IDs:", availabilityIds);
+
+            const { data } = await axios.post(
+
+                `${backendUrl}/api/bookings/create`,
+
+                {
+
+                    scheduleId,
+
+                    coachType,
+
+                    selectedSeats: availabilityIds,
+
+                    passengers,
+
+                    totalAmount: selectedSeats.length * price
+
+                }
+
+            );
+
+            if (data.success) {
+
+                navigate(
+
+                    "/payment",
+
+                    {
+
+                        state: {
+
+                            bookingId: data.bookingId,
+
+                            bookingCode: data.bookingCode,
+
+                            totalAmount: selectedSeats.length * price
+
+                        }
+
+                    }
+
+                );
+
+            }
+
+            else {
+
+                toast.error(data.message);
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.log(error);
+
+            toast.error("Booking Failed");
+
+        }
+
+    };
+
     return (
 
         <div className="passenger-page">
@@ -56,7 +183,7 @@ const PassengerDetails = () => {
 
                     <p>
 
-                        <strong>Coach Type :</strong>
+                        <strong>Coach Type :</strong>{" "}
 
                         {coachType.replaceAll("_", " ")}
 
@@ -64,15 +191,15 @@ const PassengerDetails = () => {
 
                     <p>
 
-                        <strong>Selected Seats :</strong>
+                        <strong>Selected Seats :</strong>{" "}
 
                         {
 
                             selectedSeats
 
-                            .map(seat => seat.seat_number)
+                                .map(seat => seat.seat_number)
 
-                            .join(", ")
+                                .join(", ")
 
                         }
 
@@ -80,7 +207,7 @@ const PassengerDetails = () => {
 
                     <p>
 
-                        <strong>Total Tickets :</strong>
+                        <strong>Total Tickets :</strong>{" "}
 
                         {selectedSeats.length}
 
@@ -88,7 +215,7 @@ const PassengerDetails = () => {
 
                     <p>
 
-                        <strong>Total Amount :</strong>
+                        <strong>Total Amount :</strong>{" "}
 
                         ₹ {(selectedSeats.length * price).toFixed(2)}
 
@@ -126,11 +253,7 @@ const PassengerDetails = () => {
 
                                 {" "}
 
-                                {
-
-                                    selectedSeats[index].seat_number
-
-                                }
+                                {selectedSeats[index].seat_number}
 
                             </strong>
 
@@ -152,7 +275,7 @@ const PassengerDetails = () => {
 
                                     value={passenger.name}
 
-                                    onChange={(e)=>
+                                    onChange={(e) =>
 
                                         handleChange(
 
@@ -184,7 +307,7 @@ const PassengerDetails = () => {
 
                                     value={passenger.age}
 
-                                    onChange={(e)=>
+                                    onChange={(e) =>
 
                                         handleChange(
 
@@ -214,7 +337,7 @@ const PassengerDetails = () => {
 
                                     value={passenger.gender}
 
-                                    onChange={(e)=>
+                                    onChange={(e) =>
 
                                         handleChange(
 
@@ -260,7 +383,13 @@ const PassengerDetails = () => {
 
             }
 
-            <button className="payment-btn">
+            <button
+
+                className="payment-btn"
+
+                onClick={handleProceed}
+
+            >
 
                 Proceed To Payment →
 

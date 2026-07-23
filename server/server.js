@@ -11,13 +11,17 @@ import pool from './configs/db.js';
 import adminRouter from './routes/adminRoute.js';
 import stationRouter from './routes/stationRoutes.js';
 import trainRouter from "./routes/trainRoutes.js";
-import { bookingRouter } from './routes/bookingRoute.js';
+import  bookingRouter  from './routes/bookingRoute.js';
 import paymentRouter from './routes/paymentRoutes.js';
 import notificationRouter from './routes/notificationRoute.js';
 import feedbackRouter from './routes/feedbackRoute.js';
 import seatRouter from './routes/seatRoutes.js';
+import pdfRouter from "./routes/pdfRoute.js";
+
 const app=express();
 const port=process.env.PORT || 4000;
+
+
 
 
 
@@ -52,11 +56,12 @@ app.use('/api/user',userRouter);
 app.use('/api/admin',adminRouter);
 app.use('/api/stations',stationRouter);
 app.use("/api/trains",trainRouter);
-app.use("/api/booking" ,bookingRouter);
+app.use("/api/bookings" ,bookingRouter);
 app.use("/api/payment" ,paymentRouter);
 app.use("/api/notifications",notificationRouter);
 app.use("/api/feedback",feedbackRouter);
 app.use("/api/seats", seatRouter);
+app.use("/api/pdf", pdfRouter);
 
 
 releaseExpiredBookings();

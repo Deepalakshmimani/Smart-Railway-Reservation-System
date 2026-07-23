@@ -13,13 +13,18 @@ const CoachSelection = () => {
     const [train, setTrain] = useState(null);
     const [coaches, setCoaches] = useState([]);
 
-    const fetchTrain = async () => {
+    const [schedules, setSchedules] = useState([]);
 
+    const [selectedSchedule, setSelectedSchedule] = useState("");
+
+    const fetchTrain = async () => {
+        
+        if (!selectedSchedule) return;
         try {
 
             const { data } = await axios.get(
 
-                `${backendUrl}/api/trains/train/${trainId}`
+                `${backendUrl}/api/trains/schedule/${selectedSchedule}`
 
             );
 
@@ -38,18 +43,63 @@ const CoachSelection = () => {
 
     };
 
-    useEffect(() => {
+    const fetchSchedules = async () => {
+
+    try {
+
+        const { data } = await axios.get(
+
+            `${backendUrl}/api/trains/${trainId}/schedules`
+
+        );
+
+        if (data.success) {
+
+            setSchedules(data.schedules);
+
+            if (data.schedules.length > 0) {
+
+                setSelectedSchedule(
+
+                    data.schedules[0].schedule_id
+
+                );
+
+            }
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.log(error);
+
+    }
+
+};
+
+    useEffect(()=>{
+
+    fetchSchedules();
+
+},[]);
+
+useEffect(()=>{
+
+    if(selectedSchedule){
 
         fetchTrain();
 
-    }, []);
+    }
+
+},[selectedSchedule]);
 
     const handleCoachSelect = (coach) => {
-        console.log(coach);
 
     navigate(
 
-        `/seat-selection/${train.schedule_id}/${coach.coach_type}`,
+        `/seat-selection/${selectedSchedule}/${coach.coach_type}`,
 
         {
 
@@ -57,7 +107,15 @@ const CoachSelection = () => {
 
                 price: coach.base_price,
 
-                coachName: coach.coach_name
+                travelDate:
+
+                    schedules.find(
+
+                        s =>
+
+                        s.schedule_id == selectedSchedule
+
+                    )?.travel_date
 
             }
 
@@ -160,6 +218,69 @@ const CoachSelection = () => {
             </div>
 
             {/* Coach Cards */}
+
+            <div className="date-selection">
+
+                <h3>
+
+                    Select Travel Date
+
+                </h3>
+
+                <select
+
+                    value={selectedSchedule}
+
+                    onChange={(e)=>
+
+                        setSelectedSchedule(
+
+                            e.target.value
+
+                        )
+
+                    }
+                >
+                    {
+                        schedules.map(
+
+                            schedule=>(
+
+                                <option
+
+                                    key={schedule.schedule_id}
+
+                                    value={schedule.schedule_id}
+
+                                >
+
+                                    {
+
+                                        new Date(
+
+                                            schedule.travel_date
+
+                                        ).toLocaleDateString(
+
+                                            "en-IN",
+
+                                            {
+                                         day:"2-digit",
+
+                                                month:"short",
+
+                                                year:"numeric"
+                                            }
+                                        )
+                                    }
+                                </option>
+                            )
+                        )
+                    }
+
+                </select>
+
+            </div>
 
             <h2 className="coach-title">
 

@@ -1,8 +1,6 @@
 import db from "../configs/db.js";
 
 export const getSeats = async (req, res) => {
-   
-   
 
     try {
 
@@ -12,6 +10,8 @@ export const getSeats = async (req, res) => {
 
             `
             SELECT
+
+                sa.availability_id,
 
                 c.coach_id,
 
@@ -28,23 +28,28 @@ export const getSeats = async (req, res) => {
             FROM seats s
 
             JOIN coaches c
-            ON c.coach_id = s.coach_id
+                ON c.coach_id = s.coach_id
 
             JOIN seat_availability sa
-            ON sa.seat_id = s.seat_id
+                ON sa.seat_id = s.seat_id
 
             WHERE
 
                 sa.schedule_id = ?
+
                 AND c.coach_type = ?
 
-            ORDER BY c.coach_name,
-                  CAST(s.seat_number AS UNSIGNED)
+            ORDER BY
+
+                c.coach_name,
+
+                CAST(s.seat_number AS UNSIGNED)
             `,
 
             [
 
                 scheduleId,
+
                 coachType
 
             ]
@@ -53,23 +58,23 @@ export const getSeats = async (req, res) => {
 
         return res.json({
 
-            success:true,
+            success: true,
 
-            seats:rows
+            seats: rows
 
         });
 
     }
 
-    catch(error){
+    catch (error) {
 
         console.log(error);
 
         return res.json({
 
-            success:false,
+            success: false,
 
-            message:error.message
+            message: error.message
 
         });
 

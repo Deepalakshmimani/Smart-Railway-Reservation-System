@@ -470,44 +470,14 @@ async (req, res) => {
 
   try {
 
-    const { trainId } =
+    const { scheduleId  } =
     req.params;
 
 
-    const [scheduleRows] = await db.execute(
+    
+    
 
-        `
-        SELECT
-
-            schedule_id,
-            travel_date
-
-        FROM train_schedule
-
-        WHERE train_id = ?
-
-        ORDER BY travel_date
-
-        LIMIT 1
-        `,
-
-        [trainId]
-
-    );
-
-    if (scheduleRows.length === 0) {
-
-        return res.json({
-
-            success: false,
-
-            message: "No schedule found"
-
-        });
-
-    }
-
-    const scheduleId = scheduleRows[0].schedule_id;
+    
 
     
 
@@ -1088,5 +1058,62 @@ export const restoreTrain = async (req, res) => {
     });
 
   }
+
+};
+
+
+export const getTrainSchedules = async (req, res) => {
+
+    try {
+
+        const { trainId } = req.params;
+
+        const [rows] = await db.execute(
+
+            `
+            SELECT
+
+                schedule_id,
+
+                travel_date
+
+            FROM train_schedule
+
+            WHERE
+
+                train_id = ?
+
+                AND status = 'AVAILABLE'
+
+            ORDER BY travel_date
+            `,
+
+            [trainId]
+
+        );
+
+        return res.json({
+
+            success: true,
+
+            schedules: rows
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.log(error);
+
+        return res.json({
+
+            success: false,
+
+            message: error.message
+
+        });
+
+    }
 
 };
