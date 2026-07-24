@@ -1,47 +1,38 @@
 import db from "../configs/db.js";
 
+export const getNotifications = async (req, res) => {
+    try {
 
-export const getNotifications =
-async (req, res) => {
+        const userId = req.user.id;
 
-  try {
+        const [notifications] = await db.execute(
+            `
+            SELECT
+                notification_id,
+                title,
+                message,
+                is_read,
+                created_at
+            FROM notifications
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            `,
+            [userId]
+        );
 
-    const userId =
-    req.user.id;
+        return res.json({
+            success: true,
+            notifications
+        });
 
-    const [notifications] =
-    await db.execute(
+    } catch (error) {
 
-      `
-      SELECT *
+        console.log(error);
 
-      FROM notifications
+        return res.json({
+            success: false,
+            message: error.message
+        });
 
-      WHERE user_id = ?
-
-      ORDER BY created_at DESC
-      `,
-
-      [userId]
-    );
-
-    return res.json({
-
-      success: true,
-
-      notifications
-    });
-
-  } catch (error) {
-
-    console.log(error);
-
-    return res.json({
-
-      success: false,
-
-      message:
-      error.message
-    });
-  }
+    }
 };

@@ -1,10 +1,10 @@
 import cron from "node-cron";
-
 import db from "../configs/db.js";
+import { confirmWaitingList } from "../utils/confirmWaitingList.js";
+import { createNotification } from "../utils/createNotifications.js";
 
-import {
-  confirmWaitingList
-} from "../utils/confirmWaitingList.js";
+import { getTicketData, getUserEmailById } from "../services/bookingService.js";
+import { sendTicketEmail } from "../services/emailService.js";
 
 const releaseExpiredBookings = () => {
 
@@ -12,173 +12,242 @@ const releaseExpiredBookings = () => {
      EVERY 1 MINUTE
   ========================= */
 
-  cron.schedule(
+  cron.schedule("* * * * *", async () => {
 
-    "* * * * *",
+    const connection = await db.getConnection();
 
-    async () => {
+    try {
 
-      const connection =
-      await db.getConnection();
+      console.log("Checking expired bookings...");
 
-      try {
+      /* =========================
+         GET EXPIRED BOOKINGS
+      ========================= */
 
-        console.log(
-          "Checking expired bookings..."
-        );
-
-        /* =========================
-           GET EXPIRED BOOKINGS
-        ========================= */
-
-        const [expiredBookings] =
-        await connection.execute(
-
-          `
-          SELECT
-
+      const [expiredBookings] = await connection.execute(
+        `
+        SELECT
             booking_id,
-
+            booking_code,
+            user_id,
             schedule_id,
-
             coach_type
+        FROM bookings
+        WHERE
+            status = 'PENDING'
+            AND payment_expiry < NOW()
+        `
+      );
 
-          FROM bookings
+      /* =========================
+         PROCESS EACH BOOKING
+      ========================= */
 
-          WHERE
+      for (const booking of expiredBookings) {
 
-          status = 'PENDING'
+        try {
 
-          AND payment_expiry < NOW()
+          await connection.beginTransaction();
 
-          FOR UPDATE
-          `
-        );
+          /* =========================
+             LOCK BOOKING
+          ========================= */
 
-        /* =========================
-           LOOP BOOKINGS
-        ========================= */
+          const [rows] = await connection.execute(
+            `
+            SELECT *
+            FROM bookings
+            WHERE booking_id = ?
+            FOR UPDATE
+            `,
+            [booking.booking_id]
+          );
 
-        for (const booking of expiredBookings) {
+          if (
+            rows.length === 0 ||
+            rows[0].status !== "PENDING"
+          ) {
 
-          try {
+            await connection.rollback();
+            continue;
 
-            await connection.beginTransaction();
+          }
 
-            const bookingId =
-            booking.booking_id;
+          /* =========================
+             RELEASE LOCKED SEATS
+          ========================= */
 
-            /* =========================
-               RELEASE SEATS
-            ========================= */
+          await connection.execute(
+            `
+            UPDATE seat_availability sa
 
-            await connection.execute(
+            JOIN booking_seats bs
+            ON bs.availability_id = sa.availability_id
 
-              `
-              UPDATE seat_availability sa
+            SET
 
-              JOIN booking_seats bs
-              ON bs.availability_id =
-              sa.availability_id
+                sa.status = 'AVAILABLE',
+                sa.locked_at = NULL
 
-              SET
+            WHERE
 
-              sa.status = 'AVAILABLE',
+                bs.booking_id = ?
 
-              sa.locked_at = NULL
+                AND sa.status = 'LOCKED'
+            `,
+            [booking.booking_id]
+          );
 
-              WHERE
+          /* =========================
+             BOOKING EXPIRED
+          ========================= */
 
-              bs.booking_id = ?
+          await connection.execute(
+            `
+            UPDATE bookings
+            SET status='EXPIRED'
+            WHERE booking_id=?
+            `,
+            [booking.booking_id]
+          );
 
-              AND sa.status = 'LOCKED'
-              `,
+          /* =========================
+             PAYMENT FAILED
+          ========================= */
 
-              [bookingId]
-            );
+          await connection.execute(
+            `
+            UPDATE payments
+            SET
 
-            /* =========================
-               CANCEL BOOKING
-            ========================= */
+                status='FAILED',
 
-            await connection.execute(
+                failure_reason='Payment Timeout'
 
-              `
-              UPDATE bookings
+            WHERE
 
-              SET status =
-              'CANCELLED'
+                booking_id=?
 
-              WHERE booking_id = ?
-              `,
+                AND status<>'SUCCESS'
+            `,
+            [booking.booking_id]
+          );
 
-              [bookingId]
-            );
+          /* =========================
+             WAITING LIST
+          ========================= */
 
-            /* =========================
-               UPDATE PAYMENT
-            ========================= */
+          /* =========================
+            CONFIRM WAITING LIST
+          ========================= */
 
-            await connection.execute(
-
-              `
-              UPDATE payments
-
-              SET
-
-              status = 'FAILED',
-
-              failure_reason =
-              'Payment Timeout'
-
-              WHERE
-
-              booking_id = ?
-
-              AND status = 'PENDING'
-              `,
-
-              [bookingId]
-            );
-
-            /* =========================
-               CONFIRM WAITING LIST
-            ========================= */
-
-            await confirmWaitingList(
+          const confirmedBookingId =
+          await confirmWaitingList(
 
               connection,
 
               booking.schedule_id,
 
               booking.coach_type
-            );
 
-            await connection.commit();
+          );
 
-            console.log(
+          /* =========================
+            COMMIT
+          ========================= */
 
-              `Booking ${bookingId} expired`
-            );
+          await connection.commit();
 
-          } catch (error) {
+          /* =========================
+            SEND EMAIL AFTER COMMIT
+          ========================= */
 
-            await connection.rollback();
+          if (confirmedBookingId) {
 
-            console.log(error);
+              try {
+
+                  const ticket =
+                  await getTicketData(
+                      confirmedBookingId
+                  );
+
+                  if (ticket) {
+
+                      const email =
+                      await getUserEmailById(
+                          ticket.user_id
+                      );
+
+                      if (email) {
+
+                          await sendTicketEmail(
+                              ticket,
+                              email
+                          );
+
+                          console.log(
+                              `Waiting list email sent for booking ${confirmedBookingId}`
+                          );
+
+                      }
+
+                  }
+
+              } catch (error) {
+
+                  console.log(
+                      "Waiting list email failed:",
+                      error.message
+                  );
+
+              }
+
           }
+
+          /* =========================
+             NOTIFICATION
+          ========================= */
+
+          await createNotification(
+
+            booking.user_id,
+
+            "Booking Expired",
+
+            `Your booking ${booking.booking_code} expired because payment was not completed within the allowed time.`
+
+          );
+
+          
+
+        }
+        catch (error) {
+
+          await connection.rollback();
+
+          console.log(
+            `Booking ${booking.booking_id}:`,
+            error.message
+          );
+
         }
 
-      } catch (error) {
-
-        console.log(error);
-
-      } finally {
-
-        connection.release();
       }
+
     }
-  );
+    catch (error) {
+
+      console.log(error);
+
+    }
+    finally {
+
+      connection.release();
+
+    }
+
+  });
+
 };
 
 export default releaseExpiredBookings;

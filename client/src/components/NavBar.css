@@ -180,3 +180,32 @@
 .navbar-profile-icon:hover {
   transform: scale(1.1);
 }
+
+
+.navbar-admin-link{
+
+    padding:10px 18px;
+
+    border:2px solid #2563EB;
+
+    color:#2563EB;
+
+    border-radius:8px;
+
+    text-decoration:none;
+
+    font-weight:600;
+
+    transition:.3s;
+
+    margin-right:12px;
+
+}
+
+.navbar-admin-link:hover{
+
+    background:#2563EB;
+
+    color:#fff;
+
+}

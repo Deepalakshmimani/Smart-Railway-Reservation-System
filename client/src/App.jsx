@@ -32,6 +32,7 @@ import AddCoach from './pages/admin/AddCoach';
 import Bookings from './pages/admin/Bookings';
 import AddStation from "./pages/admin/AddStation";
 import ManageStations from "./pages/admin/ManageStations";
+import Dashboard from "./pages/Dashboard";
 
 import { useAppContext } from './context/AppContext';
 
@@ -64,6 +65,10 @@ const App = () => {
           <Route path='/bookings' element={<MyBookings />} />
           <Route path='/cancel-ticket/:bookingId' element={<CancelBooking />} />
           <Route path='/about' element={<About />} />
+          <Route
+              path="/dashboard"
+              element={<Dashboard />}
+          />
           <Route path='/feedback' element={<Feedback />} />
           <Route path='/notifications' element={<Notifications />} />
           <Route path='/profile' element={<Profile />} />

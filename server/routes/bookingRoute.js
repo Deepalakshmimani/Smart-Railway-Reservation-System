@@ -4,8 +4,11 @@ import {
   confirmPayment,
   getTicket,
   getMyBookings,
-  cancelBooking, // 1. Import your cancellation controller
+  cancelBooking,
+  getCancellationPreview
 } from "../controllers/bookingController.js";
+
+
 import { authUser } from "../middlewares/authUser.js";
 
 const bookingRouter = express.Router();
@@ -15,7 +18,18 @@ bookingRouter.post("/confirm-payment", confirmPayment);
 bookingRouter.get("/ticket/:bookingId", getTicket);
 bookingRouter.get("/my-bookings", authUser, getMyBookings);
 
-// 2. Add the cancellation route here
 bookingRouter.post("/cancel/:bookingId", authUser, cancelBooking);
+
+bookingRouter.get(
+  "/cancel-preview/:bookingId",
+  authUser,
+  getCancellationPreview
+);
+
+bookingRouter.post(
+  "/cancel/:bookingId",
+  authUser,
+  cancelBooking
+);
 
 export default bookingRouter;

@@ -161,7 +161,45 @@ const PassengerDetails = () => {
 
             console.log(error);
 
-            toast.error("Booking Failed");
+            if (error.response?.status === 409) {
+
+                toast.error(
+
+                    error.response.data.message
+
+                );
+
+                navigate(
+
+                    `/seat-selection/${scheduleId}/${coachType}`,
+
+                    {
+
+                        state: {
+
+                            travelDate: location.state.travelDate,
+
+                            price,
+
+                            refresh: true
+
+                        }
+
+                    }
+
+                );
+
+                return;
+
+            }
+
+            toast.error(
+
+                error.response?.data?.message ||
+
+                "Booking Failed"
+
+            );
 
         }
 
