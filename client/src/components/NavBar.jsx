@@ -1,10 +1,12 @@
-import React from "react";
+import React ,{useState,useEffect} from "react";
 
 import { NavLink } from "react-router-dom";
 
 import "./NavBar.css";
 
 import { useAppContext } from "../context/AppContext";
+
+import axios from "axios";
 
 import { assets } from "../assets/assets";
 
@@ -14,8 +16,32 @@ function Navbar() {
     user,
     setUser,
     setShowUserLogin,
-    navigate
+    navigate,
+    backendUrl
   } = useAppContext();
+
+  const [notificationCount, setNotificationCount] = useState(0);
+
+useEffect(() => {
+    fetchNotificationCount();
+}, []);
+
+const fetchNotificationCount = async () => {
+    try {
+        const { data } = await axios.get(
+            `${backendUrl}/api/notifications`,
+            {
+                withCredentials: true
+            }
+        );
+
+        if (data.success) {
+            setNotificationCount(data.notifications.length);
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};
 
   return (
 
@@ -38,6 +64,8 @@ function Navbar() {
           </NavLink>
 
         </li>
+
+
 
         {user && (
 
@@ -75,6 +103,17 @@ function Navbar() {
 
       <div className="navbar-right-section">
 
+
+
+        <NavLink
+            to="/admin"
+            className="navbar-admin-link"
+        >
+
+            Admin Login
+
+        </NavLink>
+
         {user && (
 
           <div
@@ -86,11 +125,11 @@ function Navbar() {
 
             🔔
 
-            <span className="navbar-notification-badge">
-
-              3
-
-            </span>
+            {notificationCount > 0 && (
+                <span className="navbar-notification-badge">
+                    {notificationCount}
+                </span>
+            )}
 
           </div>
 

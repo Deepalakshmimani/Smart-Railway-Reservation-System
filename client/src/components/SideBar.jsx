@@ -65,7 +65,9 @@ function Sidebar() {
 
       <ul className="sidebar-menu">
 
-        <li>
+        {
+          user&&
+          (<li>
 
           <NavLink
             to="/dashboard"
@@ -76,7 +78,8 @@ function Sidebar() {
 
           </NavLink>
 
-        </li>
+        </li>)
+        }
 
         <li>
 

@@ -1,6 +1,7 @@
 // Feedback.jsx
 
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import "./Feedback.css";
 
 import toast from "react-hot-toast";
@@ -9,7 +10,11 @@ import { useAppContext } from "../context/AppContext";
 
 const Feedback = () => {
 
-  const { navigate } = useAppContext();
+  const location = useLocation();
+
+  const { axios, backendUrl, navigate } = useAppContext();
+
+  const bookingId = location.state?.bookingId;
 
   const [submitted, setSubmitted] =
     useState(false);
@@ -24,7 +29,7 @@ const Feedback = () => {
     suggestion: ""
   });
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
 
     setFeedback({
       ...feedback,
@@ -32,17 +37,68 @@ const Feedback = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
 
-    e.preventDefault();
+      e.preventDefault();
 
-    setSubmitted(true);
+      try {
 
-    toast.success(
-      "🎉 Feedback Submitted Successfully"
-    );
+          const { data } = await axios.post(
 
-    console.log(feedback);
+              `${backendUrl}/api/feedback/submit`,
+
+              {
+
+                  bookingId,
+
+                  overallRating: Number(feedback.rating),
+
+                  cleanlinessRating: feedback.cleanliness,
+
+                  comfortRating: feedback.comfort,
+
+                  timingRating: feedback.timing,
+
+                  staffRating: feedback.service,
+
+                  travelType: feedback.travelType,
+
+                  suggestions: feedback.suggestion
+
+              }
+
+          );
+
+          if (data.success) {
+
+              setSubmitted(true);
+
+              toast.success(data.message);
+
+          }
+
+          else {
+
+              toast.error(data.message);
+
+          }
+
+      }
+
+      catch (error) {
+
+          console.log(error);
+
+          toast.error(
+
+              error.response?.data?.message ||
+
+              "Unable to submit feedback"
+
+          );
+
+      }
+
   };
 
   return (
@@ -81,13 +137,17 @@ const Feedback = () => {
                   <option value="">
                     Select Rating
                   </option>
+                <option value="">Select Rating</option>
 
-                  <option>⭐ 1</option>
-                  <option>⭐ 2</option>
-                  <option>⭐ 3</option>
-                  <option>⭐ 4</option>
-                  <option>⭐ 5</option>
+                <option value="1">⭐ 1</option>
 
+                <option value="2">⭐ 2</option>
+
+                <option value="3">⭐ 3</option>
+
+                <option value="4">⭐ 4</option>
+
+                <option value="5">⭐ 5</option>
                 </select>
 
               </div>
@@ -326,7 +386,7 @@ const Feedback = () => {
 
             <div className="reward-box">
 
-              ₹10 Reward Credits Added
+              ₹5 Reward Credits Added
             </div>
 
             <p className="reward-note">

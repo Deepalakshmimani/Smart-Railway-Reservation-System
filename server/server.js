@@ -18,6 +18,10 @@ import feedbackRouter from './routes/feedbackRoute.js';
 import seatRouter from './routes/seatRoutes.js';
 import pdfRouter from "./routes/pdfRoute.js";
 
+import rewardRouter from "./routes/rewardRoutes.js";
+
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+
 const app=express();
 const port=process.env.PORT || 4000;
 
@@ -59,6 +63,11 @@ app.use("/api/trains",trainRouter);
 app.use("/api/bookings" ,bookingRouter);
 app.use("/api/payment" ,paymentRouter);
 app.use("/api/notifications",notificationRouter);
+app.use(
+    "/api/dashboard",
+    dashboardRoutes
+);
+app.use("/api/rewards", rewardRouter);
 app.use("/api/feedback",feedbackRouter);
 app.use("/api/seats", seatRouter);
 app.use("/api/pdf", pdfRouter);

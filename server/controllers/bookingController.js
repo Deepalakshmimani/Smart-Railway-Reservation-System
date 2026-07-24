@@ -1,5 +1,5 @@
 import db from "../configs/db.js";
-import { sendTicketEmail } from "../services/emailService.js";
+import { sendTicketEmail, sendWaitingListConfirmationEmail } from "../services/emailService.js";
 import {
   getTicketData,
   getUserEmailById,
@@ -7,8 +7,18 @@ import {
   getMyBookings as getMyBookingsService,
 } from "../services/bookingService.js";
 
+import { confirmWaitingList } from "../utils/confirmWaitingList.js";
+
+
+
 export const createBooking = async (req, res) => {
+
+  const connection = await db.getConnection();
+
   try {
+
+    await connection.beginTransaction();
+
     const {
       scheduleId,
       coachType,
@@ -19,22 +29,31 @@ export const createBooking = async (req, res) => {
 
     const userId = req.user.id;
 
-    // Generate Booking Code
     const bookingCode = "BK" + Date.now();
 
-    // Create Booking
-    const [result] = await db.execute(
+    // Payment expires in 5 minutes
+    const paymentExpiry = new Date(
+      Date.now() + 5 * 60 * 1000
+    );
+
+    /* =========================
+       CREATE BOOKING
+    ========================= */
+
+    const [result] = await connection.execute(
       `
-      INSERT INTO bookings(
+      INSERT INTO bookings
+      (
         booking_code,
         user_id,
         schedule_id,
         coach_type,
         total_tickets,
         total_amount,
-        status
+        status,
+        payment_expiry
       )
-      VALUES(?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         bookingCode,
@@ -44,43 +63,61 @@ export const createBooking = async (req, res) => {
         passengers.length,
         totalAmount,
         "PENDING",
+        paymentExpiry,
       ]
     );
 
     const bookingId = result.insertId;
 
-    // Save all passengers
+    /* =========================
+       SAVE PASSENGERS
+    ========================= */
+
     for (const passenger of passengers) {
-      await db.execute(
-        `INSERT INTO booking_passengers
+
+      await connection.execute(
+        `
+        INSERT INTO booking_passengers
         (
           booking_id,
           passenger_name,
           age,
           gender
         )
-        VALUES (?, ?, ?, ?)`,
-        [bookingId, passenger.name, passenger.age, passenger.gender]
+        VALUES (?, ?, ?, ?)
+        `,
+        [
+          bookingId,
+          passenger.name,
+          passenger.age,
+          passenger.gender,
+        ]
       );
     }
 
-    console.log("Availability IDs:", selectedSeats);
+    /* =========================
+       LOCK SEATS
+    ========================= */
 
     for (const availabilityId of selectedSeats) {
-      // Save Booking Seat
-      await db.execute(
+
+      await connection.execute(
         `
-        INSERT INTO booking_seats(
+        INSERT INTO booking_seats
+        (
           booking_id,
           availability_id
         )
-        VALUES(?, ?)
+        VALUES (?, ?)
         `,
-        [bookingId, availabilityId]
+        [
+          bookingId,
+          availabilityId,
+        ]
       );
 
-      // Mark Seat as LOCKED
-      await db.execute(
+      const [updateResult] =
+      await connection.execute(
         `
         UPDATE seat_availability
         SET
@@ -89,61 +126,246 @@ export const createBooking = async (req, res) => {
           booked_at = NULL
         WHERE
           availability_id = ?
+          AND status = 'AVAILABLE'
         `,
         [availabilityId]
       );
-    }
+
+      if (updateResult.affectedRows === 0) {
+
+          await connection.rollback();
+
+          return res.status(409).json({
+
+              success: false,
+
+              errorCode: "SEAT_ALREADY_LOCKED",
+
+              refreshSeats: true,
+
+              message:
+                  "One or more selected seats have just been booked by another passenger."
+
+          });
+
+      }}
+
+    /* =========================
+       CREATE PAYMENT RECORD
+    ========================= */
+
+    await connection.execute(
+      `
+      INSERT INTO payments
+      (
+        booking_id,
+        amount,
+        status
+      )
+      VALUES (?, ?, 'PENDING')
+      `,
+      [
+        bookingId,
+        totalAmount,
+      ]
+    );
+
+    await connection.commit();
 
     return res.json({
       success: true,
       bookingId,
       bookingCode,
+      paymentExpiry,
     });
+
   } catch (error) {
+
+    await connection.rollback();
+
     console.error(error);
-    return res.json({
-      success: false,
-      message: error.message,
+
+    return res.status(500).json({
+
+        success: false,
+
+        message: error.message,
+
     });
+
+  } finally {
+
+    connection.release();
+
   }
 };
 
+
+
+
 export const confirmPayment = async (req, res) => {
-  const { bookingId, userId } = req.body;
 
-  try {
-    // 1. Update DB Booking Status
-    await updateBookingStatus(bookingId, "CONFIRMED");
+    const {
+        bookingId,
+        useRewards,
+        redeemAmount
+    } = req.body;
 
-    // 2. Fetch full Ticket Object & User Email
-    const ticket = await getTicketData(bookingId);
+    const userId = req.user.id;
 
-    console.log("========== PAYMENT SUCCESS ==========");
-    console.log("Booking ID:", bookingId);
+    const connection = await db.getConnection();
 
-    const userEmail = await getUserEmailById(userId || ticket.user_id);
+    try {
 
-    console.log("Ticket:", ticket);
+        await connection.beginTransaction();
 
-    // 3. Dispatch Email asynchronously (non-blocking call)
-    if (userEmail) {
-      sendTicketEmail(ticket, userEmail).catch((err) =>
-        console.error("Background email process error:", err)
-      );
-    } else {
-      console.warn("⚠️ User email not found. Skipping email dispatch.");
+        /* ==========================
+           CONFIRM BOOKING
+        ========================== */
+
+        await updateBookingStatus(
+            bookingId,
+            "CONFIRMED",
+            connection
+        );
+
+        /* ==========================
+           REDEEM REWARD
+        ========================== */
+
+        if (useRewards && Number(redeemAmount) > 0) {
+
+            const [[wallet]] =
+            await connection.execute(
+                `
+                SELECT reward_credits
+                FROM users
+                WHERE user_id = ?
+                FOR UPDATE
+                `,
+                [userId]
+            );
+
+            if (!wallet) {
+
+                throw new Error("User not found");
+
+            }
+
+            if (
+                Number(wallet.reward_credits) <
+                Number(redeemAmount)
+            ) {
+
+                throw new Error(
+                    "Insufficient reward credits."
+                );
+
+            }
+
+            await connection.execute(
+                `
+                UPDATE users
+                SET reward_credits =
+                    reward_credits - ?
+                WHERE user_id = ?
+                `,
+                [
+                    redeemAmount,
+                    userId
+                ]
+            );
+
+            await connection.execute(
+                `
+                INSERT INTO reward_transactions
+                (
+                    user_id,
+                    booking_id,
+                    transaction_type,
+                    amount,
+                    description
+                )
+                VALUES
+                (
+                    ?, ?, 'REDEEMED', ?, ?
+                )
+                `,
+                [
+                    userId,
+                    bookingId,
+                    redeemAmount,
+                    "Reward redeemed during ticket payment."
+                ]
+            );
+
+        }
+
+        /* ==========================
+           GET TICKET
+        ========================== */
+
+        const ticket =
+        await getTicketData(bookingId);
+
+        const userEmail =
+        await getUserEmailById(ticket.user_id);
+
+        await connection.commit();
+
+        /* ==========================
+           SEND EMAIL
+        ========================== */
+
+        if (userEmail) {
+
+            sendTicketEmail(
+                ticket,
+                userEmail
+            ).catch(err =>
+                console.log(err)
+            );
+
+        }
+
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                useRewards && redeemAmount > 0
+                    ? `Payment successful. ₹${redeemAmount} reward credits redeemed.`
+                    : "Payment successful.",
+
+            bookingCode:
+                ticket.booking_code
+
+        });
+
     }
 
-    // 4. Always return success to client regardless of background email status
-    return res.status(200).json({
-      success: true,
-      message: "Payment confirmed and ticket generated.",
-      bookingCode: ticket.booking_code,
-    });
-  } catch (error) {
-    console.error("Error confirming payment:", error);
-    return res.status(500).json({ message: "Payment confirmation failed." });
-  }
+    catch (error) {
+
+        await connection.rollback();
+
+        console.log(error);
+
+        return res.status(500).json({
+
+            success: false,
+
+            message: error.message
+
+        });
+
+    }
+
+    finally {
+
+        connection.release();
+
+    }
+
 };
 
 export const getTicket = async (req, res) => {
@@ -199,65 +421,442 @@ export const getMyBookings = async (req, res) => {
   }
 };
 
-// ==========================================
-// NEW: Cancel Booking Controller Function
-// ==========================================
+
+const calculateRefund = (totalAmount, travelDate) => {
+
+    const today = new Date();
+    const journey = new Date(travelDate);
+
+    today.setHours(0, 0, 0, 0);
+    journey.setHours(0, 0, 0, 0);
+
+    const diffTime = journey - today;
+    const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    let refundPercentage = 0;
+    let policy = "";
+
+    if (daysLeft > 3) {
+
+        refundPercentage = 98;
+        policy = "98% refund (More than 3 days before journey)";
+
+    } else if (daysLeft === 3) {
+
+        refundPercentage = 90;
+        policy = "90% refund (3 days before journey)";
+
+    } else if (daysLeft === 2) {
+
+        refundPercentage = 75;
+        policy = "75% refund (2 days before journey)";
+
+    } else if (daysLeft === 1) {
+
+        refundPercentage = 50;
+        policy = "50% refund (1 day before journey)";
+
+    } else {
+
+        refundPercentage = 0;
+        policy = "Journey day - No refund";
+
+    }
+
+    const refundAmount =
+        Number(
+            ((totalAmount * refundPercentage) / 100).toFixed(2)
+        );
+
+    const cancellationCharge =
+        Number(
+            (totalAmount - refundAmount).toFixed(2)
+        );
+
+    return {
+
+        canCancel: daysLeft > 0,
+
+        daysLeft,
+
+        refundPercentage,
+
+        refundAmount,
+
+        cancellationCharge,
+
+        policy
+
+    };
+
+};
+
+
+
+export const getCancellationPreview = async (req, res) => {
+
+    try {
+
+        const userId = req.user.id;
+        const { bookingId } = req.params;
+
+        const [bookings] = await db.execute(
+            `
+            SELECT
+                b.booking_id,
+                b.booking_code,
+                b.total_amount,
+                b.status,
+                ts.travel_date
+            FROM bookings b
+            JOIN train_schedule ts
+                ON b.schedule_id = ts.schedule_id
+            WHERE b.booking_id = ?
+            AND b.user_id = ?
+            `,
+            [bookingId, userId]
+        );
+
+        if (bookings.length === 0) {
+            return res.json({
+                success: false,
+                message: "Booking not found"
+            });
+        }
+
+        const booking = bookings[0];
+
+        if (booking.status === "CANCELLED") {
+            return res.json({
+                success: false,
+                message: "Booking is already cancelled"
+            });
+        }
+
+        const refund = calculateRefund(
+            Number(booking.total_amount),
+            booking.travel_date
+        );
+
+        if (!refund.canCancel) {
+            return res.json({
+                success: false,
+                message: refund.policy
+            });
+        }
+
+        return res.json({
+            success: true,
+            preview: {
+                bookingId: booking.booking_id,
+                bookingCode: booking.booking_code,
+                totalAmount: booking.total_amount,
+                daysLeft: refund.daysLeft,
+                cancellationCharge: refund.cancellationCharge,
+                refundAmount: refund.refundAmount,
+                policy: refund.policy,
+                canCancel: true
+            }
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        return res.json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
+
+
 export const cancelBooking = async (req, res) => {
-  try {
-    const { bookingId } = req.params;
 
-    // 1. Fetch booking details to get total amount
-    const [bookings] = await db.execute(
-      `SELECT * FROM bookings WHERE booking_id = ?`,
-      [bookingId]
-    );
+    const connection = await db.getConnection();
 
-    if (bookings.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Booking not found",
-      });
+    try {
+
+        await connection.beginTransaction();
+
+        const { bookingId } = req.params;
+
+        const [bookings] = await connection.execute(
+            `
+            SELECT
+                b.*,
+                ts.travel_date
+            FROM bookings b
+            JOIN train_schedule ts
+                ON b.schedule_id = ts.schedule_id
+            WHERE b.booking_id = ?
+            FOR UPDATE
+            `,
+            [bookingId]
+        );
+
+        if (bookings.length === 0) {
+
+            await connection.rollback();
+            connection.release();
+
+            return res.status(404).json({
+                success: false,
+                message: "Booking not found"
+            });
+
+        }
+
+        const booking = bookings[0];
+
+        if (booking.status === "CANCELLED") {
+
+            await connection.rollback();
+            connection.release();
+
+            return res.status(400).json({
+                success: false,
+                message: "Booking already cancelled"
+            });
+
+        }
+
+        const refund = calculateRefund(
+            Number(booking.total_amount),
+            booking.travel_date
+        );
+
+        if (!refund.canCancel) {
+
+            await connection.rollback();
+            connection.release();
+
+            return res.status(400).json({
+                success: false,
+                message: refund.policy
+            });
+
+        }
+
+        /* -----------------------------
+           Cancel Booking
+        ------------------------------ */
+
+        await connection.execute(
+            `
+            UPDATE bookings
+            SET status='CANCELLED'
+            WHERE booking_id=?
+            `,
+            [bookingId]
+        );
+
+        /* -----------------------------
+           Release Seats
+        ------------------------------ */
+
+        await connection.execute(
+            `
+            UPDATE seat_availability
+            SET
+
+                status='AVAILABLE',
+
+                booked_at=NULL,
+
+                locked_at=NULL
+
+            WHERE availability_id IN
+            (
+                SELECT availability_id
+                FROM booking_seats
+                WHERE booking_id=?
+            )
+            `,
+            [bookingId]
+        );
+
+        /* -----------------------------
+           Refund Payment
+        ------------------------------ */
+
+        await connection.execute(
+            `
+            UPDATE payments
+            SET
+
+                refund_amount=?,
+
+                status='REFUNDED'
+
+            WHERE booking_id=?
+            `,
+            [
+                refund.refundAmount,
+                bookingId
+            ]
+        );
+
+        /* -----------------------------
+           Cancellation Log
+        ------------------------------ */
+
+        await connection.execute(
+            `
+            INSERT INTO cancellation_logs
+            (
+                booking_id,
+                reason,
+                refund_amount
+            )
+            VALUES
+            (
+                ?, ?, ?
+            )
+            `,
+            [
+                bookingId,
+                refund.policy,
+                refund.refundAmount
+            ]
+        );
+
+        /* -----------------------------
+           Notification
+        ------------------------------ */
+
+        await connection.execute(
+            `
+            INSERT INTO notifications
+            (
+                user_id,
+                title,
+                message
+            )
+            VALUES
+            (
+                ?, ?, ?
+            )
+            `,
+            [
+                booking.user_id,
+                "Ticket Cancelled",
+                `Your booking ${booking.booking_code} has been cancelled successfully. Refund Amount: ₹${refund.refundAmount}`
+            ]
+        );
+
+
+                /* -----------------------------
+           Auto Confirm Waiting List
+        ------------------------------ */
+
+        const confirmedBookingId =
+        await confirmWaitingList(
+            connection,
+            booking.schedule_id,
+            booking.coach_type
+        );
+
+        /* -----------------------------
+           Commit Transaction
+        ------------------------------ */
+
+        await connection.commit();
+
+        const cancelledTicket =
+        await getTicketData(bookingId);
+
+        const cancelledEmail =
+        await getUserEmailById(
+            cancelledTicket.user_id
+        );
+
+        await sendCancellationEmail(
+
+            cancelledTicket,
+
+            cancelledEmail,
+
+            refund
+
+        );
+
+        connection.release();
+
+
+        /* =========================
+          SEND WAITING LIST EMAIL
+        ========================= */
+
+        if (confirmedBookingId) {
+
+            try {
+
+                const ticket =
+                await getTicketData(
+                    confirmedBookingId
+                );
+
+                if (ticket) {
+
+                    const email =
+                    await getUserEmailById(
+                        ticket.user_id
+                    );
+
+                    if (email) {
+
+                        await sendWaitingListConfirmationEmail(
+                            ticket,
+                            email
+                        );
+
+                        console.log(
+                            `Waiting list email sent for booking ${confirmedBookingId}`
+                        );
+
+                    }
+
+                }
+
+            } catch (error) {
+
+                console.log(
+                    "Waiting list email failed:",
+                    error.message
+                );
+
+            }
+
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Ticket cancelled successfully",
+            refund: {
+                refundAmount: refund.refundAmount,
+                cancellationCharge: refund.cancellationCharge,
+                daysLeft: refund.daysLeft,
+                policy: refund.policy
+            }
+        });
+
+    } catch (error) {
+
+        await connection.rollback();
+
+        connection.release();
+
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
     }
 
-    const booking = bookings[0];
-
-    if (booking.status === "CANCELLED") {
-      return res.status(400).json({
-        success: false,
-        message: "Booking is already cancelled",
-      });
-    }
-
-    // 2. Mark booking status as CANCELLED
-    await db.execute(
-      `UPDATE bookings SET status = 'CANCELLED' WHERE booking_id = ?`,
-      [bookingId]
-    );
-
-    // 3. Release booked seats back to AVAILABLE
-    await db.execute(
-      `UPDATE seat_availability 
-       SET status = 'AVAILABLE', booked_at = NULL, locked_at = NULL 
-       WHERE availability_id IN (
-         SELECT availability_id FROM booking_seats WHERE booking_id = ?
-       )`,
-      [bookingId]
-    );
-
-    // 4. Calculate refund (e.g. Total amount minus ₹50 cancellation fee)
-    const cancellationCharge = 50;
-    const refundAmount = Math.max(0, Number(booking.total_amount) - cancellationCharge);
-
-    return res.status(200).json({
-      success: true,
-      message: "Ticket cancelled successfully",
-      refundAmount: refundAmount.toFixed(2),
-    });
-  } catch (error) {
-    console.error("Error cancelling booking:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Failed to cancel booking",
-    });
-  }
 };

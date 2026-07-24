@@ -1,103 +1,115 @@
-// Notifications.jsx
-
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import "./Notifications.css";
+import { useAppContext } from "../context/AppContext";
+import toast from "react-hot-toast";
 
 const Notifications = () => {
 
-  const notifications = [
+    const { backendUrl } = useAppContext();
 
-    {
-      id: 1,
-      title: "Booking Confirmed",
-      message:
-        "Your Chennai Express ticket has been confirmed successfully.",
-      time: "2 mins ago",
-      type: "success"
-    },
+    const [notifications, setNotifications] = useState([]);
 
-    {
-      id: 2,
-      title: "Train Delayed",
-      message:
-        "Vaigai Express is delayed by 25 minutes.",
-      time: "15 mins ago",
-      type: "warning"
-    },
+    useEffect(() => {
 
-    {
-      id: 3,
-      title: "Refund Processed",
-      message:
-        "₹850 refund has been added to your wallet.",
-      time: "1 hour ago",
-      type: "info"
-    },
+        fetchNotifications();
 
-    {
-      id: 4,
-      title: "Feedback Reward",
-      message:
-        "₹10 reward credits added for your feedback.",
-      time: "Today",
-      type: "reward"
-    }
+    }, []);
 
-  ];
+    const fetchNotifications = async () => {
 
-  return (
+        try {
 
-    <div className="notifications-page">
+            const { data } = await axios.get(
+                `${backendUrl}/api/notifications`,
+                {
+                    withCredentials: true
+                }
+            );
 
-      <div className="notifications-card">
+            if (data.success) {
 
-        <div className="notification-header">
+                setNotifications(data.notifications);
 
-          <h1>Notifications</h1>
+            } else {
 
-          <span>
-            {notifications.length}
-            {" "}
-            New
-          </span>
+                toast.error(data.message);
 
-        </div>
+            }
 
-        <div className="notification-list">
+        } catch (error) {
 
-          {notifications.map((item) => (
+            toast.error(error.message);
 
-            <div
-              key={item.id}
-              className={`notification-item ${item.type}`}
-            >
+        }
 
-              <div className="notification-content">
+    };
 
-                <h3>
-                  {item.title}
-                </h3>
+    return (
 
-                <p>
-                  {item.message}
-                </p>
+        <div className="notifications-page">
 
-              </div>
+            <div className="notifications-card">
 
-              <span className="time">
-                {item.time}
-              </span>
+                <div className="notification-header">
+
+                    <h1>Notifications</h1>
+
+                    <span>
+                        {notifications.length} New
+                    </span>
+
+                </div>
+
+                <div className="notification-list">
+
+                    {
+                        notifications.length === 0 ?
+
+                        (
+                            <p>No notifications available.</p>
+                        )
+
+                        :
+
+                        notifications.map((item) => (
+
+                            <div
+                                key={item.notification_id}
+                                className="notification-item"
+                            >
+
+                                <div className="notification-content">
+
+                                    <h3>{item.title}</h3>
+
+                                    <p>{item.message}</p>
+
+                                </div>
+
+                                <span className="time">
+
+                                    {
+                                        new Date(item.created_at)
+                                        .toLocaleString()
+                                    }
+
+                                </span>
+
+                            </div>
+
+                        ))
+
+                    }
+
+                </div>
 
             </div>
 
-          ))}
-
         </div>
 
-      </div>
+    );
 
-    </div>
-  );
 };
 
 export default Notifications;

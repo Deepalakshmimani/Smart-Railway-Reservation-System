@@ -31,6 +31,9 @@ const formatTime = (timeString) => {
   });
 };
 
+
+
+
 const canCancelTicket = (travelDate, departureTime, status) => {
   if (status !== "CONFIRMED") {
     return false;
@@ -48,6 +51,34 @@ const canCancelTicket = (travelDate, departureTime, status) => {
 
   return new Date() < departure;
 };
+
+
+const canGiveFeedback = (
+  travelDate,
+  arrivalTime,
+  status
+) => {
+
+  if (status !== "CONFIRMED") {
+    return false;
+  }
+
+  const arrival = new Date(travelDate);
+
+  const [hour, minute] =
+    arrivalTime.split(":");
+
+  arrival.setHours(
+    Number(hour),
+    Number(minute),
+    0,
+    0
+  );
+
+  return new Date() > arrival;
+
+};
+
 
 const BookingCard = ({ booking }) => {
   const navigate = useNavigate();
@@ -83,12 +114,54 @@ const BookingCard = ({ booking }) => {
     navigate(`/cancel-ticket/${bookingId}`);
   };
 
+
+  const handleGiveFeedback = () => {
+
+    navigate("/feedback", {
+
+      state: {
+
+        bookingId
+
+      }
+
+    });
+
+  };
+
+
   // Optional: If you decide to keep or use download anywhere else
   const handleDownloadPDF = () => {
     window.open(
       `${backendUrl}/api/pdf/download/${bookingId}`, // 3. Used backendUrl here instead of import.meta.env
       "_blank"
     );
+  };
+
+
+  const getStatusClass = (status) => {
+
+    switch (status) {
+
+      case "CONFIRMED":
+        return "status-confirmed";
+
+      case "CANCELLED":
+        return "status-cancelled";
+
+      case "PENDING":
+        return "status-pending";
+
+      case "EXPIRED":
+        return "status-expired";
+
+      case "COMPLETED":
+        return "status-completed";
+
+      default:
+        return "";
+    }
+
   };
 
   return (
@@ -106,7 +179,7 @@ const BookingCard = ({ booking }) => {
           </p>
         </div>
 
-        <div className="status">
+        <div className={`status ${getStatusClass(status)}`}>
           {status}
         </div>
       </div>
@@ -148,6 +221,7 @@ const BookingCard = ({ booking }) => {
         </div>
 
         <div className="booking-buttons">
+
           <button
             className="view-btn"
             onClick={handleViewTicket}
@@ -155,21 +229,71 @@ const BookingCard = ({ booking }) => {
             View Ticket
           </button>
 
-          {canCancelTicket(travelDate, departureTime, status) ? (
-            <button
-              className="cancel-btn"
-              onClick={handleCancelTicket}
-            >
-              Cancel Ticket
-            </button>
-          ) : (
-            <button
-              className="cancel-btn disabled-btn"
-              disabled
-            >
-              Journey Started
-            </button>
-          )}
+          {
+            status === "CANCELLED" ? (
+
+                <button
+                    className="cancel-btn disabled-btn"
+                    disabled
+                >
+                    Ticket Cancelled
+                </button>
+
+            ) : canCancelTicket(
+                travelDate,
+                departureTime,
+                status
+            ) ? (
+
+                <button
+                    className="cancel-btn"
+                    onClick={handleCancelTicket}
+                >
+                    Cancel Ticket
+                </button>
+
+            ) : (
+
+                <button
+                    className="cancel-btn disabled-btn"
+                    disabled
+                >
+                    Journey Started
+                </button>
+
+            )
+        }
+
+          {
+            booking.feedbackSubmitted ? (
+
+              <button
+                className="feedback-btn submitted"
+                disabled
+              >
+                ✓ Feedback Submitted
+              </button>
+
+            ) : (
+
+              canGiveFeedback(
+                travelDate,
+                arrivalTime,
+                status
+              ) && (
+
+                <button
+                  className="feedback-btn"
+                  onClick={handleGiveFeedback}
+                >
+                  Give Feedback
+                </button>
+
+              )
+
+            )
+          }
+
         </div>
       </div>
     </div>

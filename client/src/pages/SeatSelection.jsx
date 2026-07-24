@@ -4,6 +4,10 @@ import {
     useLocation
 } from "react-router-dom";
 
+import toast from "react-hot-toast";
+
+
+
 import { useAppContext } from "../context/AppContext";
 
 import "./SeatSelection.css";
@@ -38,7 +42,57 @@ const SeatSelection = () => {
 
             if (data.success) {
 
+            
+
                 setSeats(data.seats);
+
+                setSelectedSeats(previous => {
+
+                    const availableSeatIds =
+                        data.seats
+                            .filter(
+                                seat => seat.status === "AVAILABLE"
+                            )
+                            .map(
+                                seat => seat.seat_id
+                            );
+
+                    const removedSeats = previous.filter(
+
+                        seat =>
+
+                        !availableSeatIds.includes(
+                            seat.seat_id
+                        )
+
+                    );
+
+                    if (removedSeats.length > 0) {
+
+                        toast.warning(
+
+                            `${removedSeats
+                                .map(s => s.seat_number)
+                                .join(", ")}
+                            is no longer available.`
+
+                        );
+
+                    }
+
+                    return previous.filter(
+
+                        seat =>
+
+                        availableSeatIds.includes(
+                            seat.seat_id
+                        )
+
+                    );
+
+                });
+
+            
 
             }
 
@@ -54,7 +108,31 @@ const SeatSelection = () => {
 
         fetchSeats();
 
+        const interval = setInterval(() => {
+
+            fetchSeats();
+
+        }, 20000);
+
+        return () => clearInterval(interval);
+
     }, []);
+
+
+    useEffect(() => {
+
+        if (location.state?.refresh) {
+
+            toast.error(
+
+                "Seat availability has changed. Please select your seats again."
+
+            );
+
+        }
+
+    }, []);
+
 
     /* ===========================
        Select / Unselect Seat
@@ -340,7 +418,23 @@ const SeatSelection = () => {
 
                     className="continue-btn"
 
-                    disabled={selectedSeats.length === 0}
+                    disabled={
+                        selectedSeats.length === 0 ||
+                        selectedSeats.some(
+
+                            seat =>
+
+                            !seats.find(
+
+                                s =>
+
+                                s.seat_id === seat.seat_id &&
+                                s.status === "AVAILABLE"
+
+                            )
+
+                        )
+                    }
 
                     onClick={handleContinue}
 
