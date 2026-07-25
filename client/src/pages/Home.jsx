@@ -1,28 +1,25 @@
 import React, { useEffect } from "react";
 import MainBanner from "../components/MainBanner";
-import Recommended from "../components/TrainCardList";
-import { useAppContext } from "../context/AppContext";
+import RecommendedTrainList from "../components/RecommendedTrainList";
 import Search from "../components/SearchBar";
 import SearchResults from "../components/SearchResults";
+import { useAppContext } from "../context/AppContext";
 
 const Home = () => {
 
     const {
-
         user,
         results,
         handleSearch,
         recommendedTrains,
         fetchRecommendedTrains
-
     } = useAppContext();
+    console.log("Recommended:", recommendedTrains);
 
     useEffect(() => {
 
         if (user) {
-
             fetchRecommendedTrains();
-
         }
 
     }, [user]);
@@ -33,16 +30,22 @@ const Home = () => {
 
             <MainBanner />
 
-            {user && (
+            {/* AI Recommended Trains */}
+            
+            {user && recommendedTrains.length > 0 && (
 
-                <Recommended
-                    title="Recommended Trains"
+                <RecommendedTrainList
+                    title="🤖 Recommended For You"
                     trains={recommendedTrains}
                 />
 
             )}
 
+            {/* Search Section */}
+
             <Search onSearch={handleSearch} />
+
+            {/* Search Results */}
 
             <SearchResults results={results} />
 

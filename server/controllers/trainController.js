@@ -6,6 +6,17 @@ import {generateSchedules} from "../services/scheduleService.js";
 
 import {generateSeatAvailability} from "../services/seatService.js";
 
+import {
+    markRecommendationDirty
+} from "../services/recommendationService.js";
+
+import { spawn } from "child_process";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 //Add Train
 
 export const addTrain =
@@ -160,6 +171,8 @@ export const addTrain =
           ]
         );
 
+      markRecommendationDirty();
+
       const trainId =
         trainResult.insertId;
       
@@ -300,21 +313,23 @@ export const getTrains = async (req, res) => {
       const hours = Math.floor(diff / 60);
       const minutes = diff % 60;
       
-      return {
+    return {
+        ...train,
 
-          ...train,
+        train: train.train_name,
+        source: train.source_station,
+        destination: train.destination_station,
+        departure: train.departure_time,
+        arrival: train.arrival_time,
+        price: train.starting_price,
+        coachTypes: train.coach_types,
 
-          duration: `${hours}h ${minutes}m`,
-
-          runningDays: train.running_days || [],
-
-          status: train.is_active ? "Available" : "Cancelled",
-
-          coaches: train.coaches,
-
-          totalSeats: train.total_seats
-
-      };
+        duration: `${hours}h ${minutes}m`,
+        runningDays: train.running_days || [],
+        status: train.is_active ? "Available" : "Cancelled",
+        coaches: train.coaches,
+        totalSeats: train.total_seats
+    };
     });
 
     return res.json({
@@ -722,8 +737,48 @@ export const getRecommendedTrains = async (req, res) => {
 
     try {
 
-        const [trains] = await db.execute(
+        const userId = req.user.id;
 
+        const python = spawn(
+            "python",
+            [
+                path.join(
+                    __dirname,
+                    "../recommendation/predict_api.py"
+                ),
+                userId.toString()
+            ]
+        );
+
+        let output = "";
+        let error = "";
+
+        python.stdout.on("data", (data) => {
+            output += data.toString();
+        });
+
+        python.stderr.on("data", (data) => {
+            error += data.toString();
+        });
+
+        python.on("close", async (code) => {
+
+            if (code !== 0) {
+                return res.json({
+                    success: false,
+                    message: error
+                });
+            }
+
+            const result = JSON.parse(output);
+
+            const recommendations = result.recommendations;
+
+            const trainIds = recommendations.map(r => r.train_id);
+
+            const placeholders = trainIds.map(() => "?").join(",");
+
+            const [trains] = await db.execute(
             `
             SELECT
 
@@ -733,80 +788,73 @@ export const getRecommendedTrains = async (req, res) => {
                 t.departure_time,
                 t.arrival_time,
                 t.rating,
+                t.is_active,
 
                 s1.station_name AS source_station,
                 s2.station_name AS destination_station,
 
-                MIN(c.base_price) AS starting_price,
-
-                GROUP_CONCAT(DISTINCT c.coach_type) AS coach_types,
-
-                COUNT(DISTINCT c.coach_id) AS coaches,
-
-                SUM(c.total_seats) AS totalSeats
+                (
+                    SELECT MIN(base_price)
+                    FROM coaches
+                    WHERE train_id = t.train_id
+                ) AS starting_price
 
             FROM trains t
 
             JOIN stations s1
-                ON t.source_station_id = s1.station_id
+            ON s1.station_id = t.source_station_id
 
             JOIN stations s2
-                ON t.destination_station_id = s2.station_id
+            ON s2.station_id = t.destination_station_id
 
-            JOIN coaches c
-                ON c.train_id = t.train_id
+            WHERE
 
-            WHERE t.is_active = true
+            t.train_id IN (${placeholders})
 
-            GROUP BY t.train_id
+            AND t.is_active = 1
+            `,
+            trainIds
+            );
 
-            ORDER BY RAND()
 
-            LIMIT 3
-            `
-        );
 
-        const formatted = trains.map((train) => {
+            const formatted = trains.map((train) => {
 
-            const departure =
-                new Date(`1970-01-01T${train.departure_time}`);
+                const departure = new Date(`1970-01-01T${train.departure_time}`);
+                const arrival = new Date(`1970-01-01T${train.arrival_time}`);
 
-            const arrival =
-                new Date(`1970-01-01T${train.arrival_time}`);
+                let diff = (arrival - departure) / (1000 * 60);
 
-            let diff =
-                (arrival - departure) / (1000 * 60);
+                if (diff < 0) {
+                    diff += 24 * 60;
+                }
 
-            if (diff < 0) {
+                const hours = Math.floor(diff / 60);
+                const minutes = diff % 60;
 
-                diff += 24 * 60;
+                const recommendation = recommendations.find(
+                    r => r.train_id === train.train_id
+                );
 
-            }
 
-            const hours = Math.floor(diff / 60);
-            const minutes = diff % 60;
 
-            return {
+                return {
+                    ...train,
+                    duration: `${hours}h ${minutes}m`,
+                    score: recommendation?.score,
+                    reason: recommendation?.reason
+                };
+            });
 
-                ...train,
-
-                duration: `${hours}h ${minutes}m`
-
-            };
-
-        });
-
-        return res.json({
-
-            success: true,
-
-            trains: formatted
+            return res.json({
+                success: true,
+                trains: formatted
+            });
 
         });
 
     } catch (error) {
 
-        console.log(error);
 
         return res.json({
 

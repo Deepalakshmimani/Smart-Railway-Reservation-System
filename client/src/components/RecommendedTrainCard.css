@@ -1,0 +1,264 @@
+/* ===========================
+   Recommended Section Wrapper
+=========================== */
+
+.recommended-section {
+    /* 
+       FIX FOR SIDEBAR OVERLAP: 
+       Pushes content to the right of the fixed sidebar.
+       (If sidebar width changes, adjust 260px accordingly)
+    */
+    margin-left: 260px !important; 
+    width: calc(100% - 260px) !important;
+    padding: 24px 32px;
+    box-sizing: border-box;
+}
+
+.recommended-header {
+    margin-bottom: 24px;
+}
+
+.recommended-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 6px 0;
+}
+
+.recommended-header p {
+    color: #64748b;
+    font-size: 14px;
+    margin: 0;
+}
+
+
+/* ===========================
+   Grid Layout
+=========================== */
+
+.recommended-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(260px, 1fr));
+    gap: 20px;
+    align-items: stretch;
+}
+
+
+/* ===========================
+   Card Base
+=========================== */
+
+.recommended-train-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    min-width: 0;
+}
+
+.recommended-train-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+
+/* ===========================
+   AI Header Tag
+=========================== */
+
+.recommend-header {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 12px;
+}
+
+.ai-tag {
+    background: #f1f5f9;
+    color: #4f46e5;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+
+/* ===========================
+   Top Header (Name & Rating)
+=========================== */
+
+.recommend-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.recommend-top h3 {
+    margin: 0;
+    flex: 1;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rating {
+    flex-shrink: 0;
+    background: #fffbeb;
+    color: #f59e0b;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* ===========================
+   Route Subtitle
+=========================== */
+
+.route {
+    margin: 4px 0 16px 0;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+
+/* ===========================
+   Time & Duration Box
+=========================== */
+
+.recommend-time {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.recommend-time h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.recommend-time span {
+    color: #94a3b8;
+    font-size: 12px;
+    display: block;
+    margin-top: 2px;
+}
+
+.duration {
+    color: #2563eb;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+
+/* ===========================
+   Reason Dropdown / Badge Section
+=========================== */
+
+.overall-reason {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: #34d399;
+    border-radius: 50%;
+    margin-bottom: 12px;
+}
+
+.why-section {
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.why-button {
+    border: none;
+    background: transparent;
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+.why-button:hover {
+    text-decoration: underline;
+}
+
+
+/* ===========================
+   Footer / Action Controls
+=========================== */
+
+.recommend-footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.recommend-footer h3 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.book-btn {
+    width: 100%;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    margin-top: 10px;
+}
+
+.book-btn:hover {
+    background: #1d4ed8;
+}
+
+
+/* ===========================
+   Responsive Queries
+=========================== */
+
+@media (max-width: 1200px) {
+    .recommended-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 850px) {
+    /* Resets sidebar offset for mobile viewports */
+    .recommended-section {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 16px;
+    }
+
+    .recommended-grid {
+        grid-template-columns: 1fr;
+    }
+}

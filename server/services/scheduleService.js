@@ -1,3 +1,7 @@
+import {
+    markRecommendationDirty
+} from "../services/recommendationService.js";
+
 export const generateSchedules =
   async (
     connection,
@@ -64,6 +68,8 @@ export const generateSchedules =
         );
       }
     }
+
+    markRecommendationDirty();
 
     return scheduleIds;
   };

@@ -192,109 +192,65 @@ class RecommendationEngine:
         )
         
         
-    def recommend(self,
-
-                  user_id,
-
-                  top_n=5):
+    def recommend(self, user_id, top_n=5):
 
         user = self._get_user(user_id)
 
-        if user is None:
+        # Cold-start: New users or users with low confidence
+        if (
+            user is None
+            or user.get("confidence_score", 0) < 0.3
+        ):
 
-            recommendations = (
-
-                self._global_recommendation(top_n)
-
-            )
+            recommendations = self._global_recommendation(top_n)
+            user = None
 
         else:
 
-            personalized = (
-
-                self._personalized(
-
-                    user,
-
-                    top_n=20
-
-                )
-
+            personalized = self._personalized(
+                user,
+                top_n=20
             )
 
             recommendations = (
-
                 self._hybrid(
-
                     user,
-
                     personalized
-
                 ).head(top_n)
-
             )
 
         response = []
 
         for _, train in recommendations.iterrows():
 
+            reasons = (
+                generate_explanation(user, train)
+                if user is not None
+                else [
+                    "Popular train",
+                    "Highly rated"
+                ]
+            )
+
             response.append({
 
-                "train_id":
+                "train_id": int(train["train_id"]),
 
-                    int(train["train_id"]),
+                "train_name": train["train_name"],
 
-                "train_name":
-
-                    train["train_name"],
-
-                "score":
-
-                    round(
-
-                        float(
-
-                            train.get(
-
-                                "final_score",
-
-                                train.get(
-
-                                    "score",
-
-                                    0
-
-                                )
-
-                            )
-
-                        ),
-
-                        3
-
+                "score": round(
+                    float(
+                        train.get(
+                            "final_score",
+                            train.get("score", 0)
+                        )
                     ),
+                    3
+                ),
 
-                "reason":
+                "overall_reason": reasons[0],
 
-                    generate_explanation(
-
-                        user,
-
-                        train
-
-                    )
-
-                    if user is not None
-
-                    else
-
-                    [
-
-                        "Popular train",
-
-                        "Highly rated"
-
-                    ]
+                "reason": reasons
 
             })
 

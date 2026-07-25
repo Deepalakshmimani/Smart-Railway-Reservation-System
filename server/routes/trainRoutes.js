@@ -54,6 +54,7 @@ trainRouter.get(
 
 trainRouter.get(
     "/recommended",
+    authUser,
     getRecommendedTrains
 );
 

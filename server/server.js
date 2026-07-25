@@ -22,6 +22,12 @@ import rewardRouter from "./routes/rewardRoutes.js";
 
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 
+import startRecommendationWorker from "./workers/recommendationWorker.js";
+
+
+
+
+
 const app=express();
 const port=process.env.PORT || 4000;
 
@@ -73,8 +79,10 @@ app.use("/api/seats", seatRouter);
 app.use("/api/pdf", pdfRouter);
 
 
+
 releaseExpiredBookings();
 app.listen(port,()=>
 {
   console.log(`Server is running on http://localhost:${port}`)
+  startRecommendationWorker();
 })

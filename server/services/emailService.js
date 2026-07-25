@@ -24,6 +24,8 @@ export const sendTicketEmail = async (ticket, userEmail) => {
         },
       ],
     };
+    console.log("EMAIL_USER:", process.env.EMAIL_USER);
+    console.log("Recipient:", userEmail);
 
     console.log(`✉️ Sending Email to ${userEmail}...`);
     const info = await transporter.sendMail(mailOptions);

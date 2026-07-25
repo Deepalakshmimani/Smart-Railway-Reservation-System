@@ -1,5 +1,9 @@
 import db from "../configs/db.js";
 
+import {
+    markRecommendationDirty
+} from "../services/recommendationService.js";
+
 export const submitFeedback = async (req, res) => {
 
   const connection = await db.getConnection();
@@ -128,6 +132,10 @@ export const submitFeedback = async (req, res) => {
         suggestions || null
       ]
     );
+
+
+
+     markRecommendationDirty();
 
     /* =========================
        UPDATE TRAIN RATING
