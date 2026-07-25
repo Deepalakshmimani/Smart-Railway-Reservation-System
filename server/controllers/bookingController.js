@@ -1,13 +1,17 @@
 import db from "../configs/db.js";
-import { sendTicketEmail, sendWaitingListConfirmationEmail } from "../services/emailService.js";
+import { sendTicketEmail, sendWaitingListConfirmationEmail,sendCancellationEmail } from "../services/emailService.js";
 import {
   getTicketData,
   getUserEmailById,
-  updateBookingStatus,
+
   getMyBookings as getMyBookingsService,
 } from "../services/bookingService.js";
 
 import { confirmWaitingList } from "../utils/confirmWaitingList.js";
+
+import {
+    markRecommendationDirty
+} from "../services/recommendationService.js";
 
 
 
@@ -172,6 +176,8 @@ export const createBooking = async (req, res) => {
 
     await connection.commit();
 
+    markRecommendationDirty();
+
     return res.json({
       success: true,
       bookingId,
@@ -203,170 +209,179 @@ export const createBooking = async (req, res) => {
 
 
 
-export const confirmPayment = async (req, res) => {
+// export const confirmPayment = async (req, res) => {
 
-    const {
-        bookingId,
-        useRewards,
-        redeemAmount
-    } = req.body;
+//     const {
+//         bookingId,
+//         useRewards,
+//         redeemAmount
+//     } = req.body;
 
-    const userId = req.user.id;
+//     const userId = req.user.id;
 
-    const connection = await db.getConnection();
+//     const connection = await db.getConnection();
 
-    try {
+//     try {
 
-        await connection.beginTransaction();
+//         await connection.beginTransaction();
 
-        /* ==========================
-           CONFIRM BOOKING
-        ========================== */
+//         /* ==========================
+//            CONFIRM BOOKING
+//         ========================== */
 
-        await updateBookingStatus(
-            bookingId,
-            "CONFIRMED",
-            connection
-        );
+//         await updateBookingStatus(
+//             bookingId,
+//             "CONFIRMED",
+//             connection
+//         );
 
-        /* ==========================
-           REDEEM REWARD
-        ========================== */
+//         /* ==========================
+//            REDEEM REWARD
+//         ========================== */
 
-        if (useRewards && Number(redeemAmount) > 0) {
+//         if (useRewards && Number(redeemAmount) > 0) {
 
-            const [[wallet]] =
-            await connection.execute(
-                `
-                SELECT reward_credits
-                FROM users
-                WHERE user_id = ?
-                FOR UPDATE
-                `,
-                [userId]
-            );
+//             const [[wallet]] =
+//             await connection.execute(
+//                 `
+//                 SELECT reward_credits
+//                 FROM users
+//                 WHERE user_id = ?
+//                 FOR UPDATE
+//                 `,
+//                 [userId]
+//             );
 
-            if (!wallet) {
+//             if (!wallet) {
 
-                throw new Error("User not found");
+//                 throw new Error("User not found");
 
-            }
+//             }
 
-            if (
-                Number(wallet.reward_credits) <
-                Number(redeemAmount)
-            ) {
+//             if (
+//                 Number(wallet.reward_credits) <
+//                 Number(redeemAmount)
+//             ) {
 
-                throw new Error(
-                    "Insufficient reward credits."
-                );
+//                 throw new Error(
+//                     "Insufficient reward credits."
+//                 );
 
-            }
+//             }
 
-            await connection.execute(
-                `
-                UPDATE users
-                SET reward_credits =
-                    reward_credits - ?
-                WHERE user_id = ?
-                `,
-                [
-                    redeemAmount,
-                    userId
-                ]
-            );
+//             await connection.execute(
+//                 `
+//                 UPDATE users
+//                 SET reward_credits =
+//                     reward_credits - ?
+//                 WHERE user_id = ?
+//                 `,
+//                 [
+//                     redeemAmount,
+//                     userId
+//                 ]
+//             );
 
-            await connection.execute(
-                `
-                INSERT INTO reward_transactions
-                (
-                    user_id,
-                    booking_id,
-                    transaction_type,
-                    amount,
-                    description
-                )
-                VALUES
-                (
-                    ?, ?, 'REDEEMED', ?, ?
-                )
-                `,
-                [
-                    userId,
-                    bookingId,
-                    redeemAmount,
-                    "Reward redeemed during ticket payment."
-                ]
-            );
+//             await connection.execute(
+//                 `
+//                 INSERT INTO reward_transactions
+//                 (
+//                     user_id,
+//                     booking_id,
+//                     transaction_type,
+//                     amount,
+//                     description
+//                 )
+//                 VALUES
+//                 (
+//                     ?, ?, 'REDEEMED', ?, ?
+//                 )
+//                 `,
+//                 [
+//                     userId,
+//                     bookingId,
+//                     redeemAmount,
+//                     "Reward redeemed during ticket payment."
+//                 ]
+//             );
 
-        }
+//         }
 
-        /* ==========================
-           GET TICKET
-        ========================== */
+//         const ticket = await getTicketData(bookingId);
+//         console.log("✅ Ticket:", ticket);
 
-        const ticket =
-        await getTicketData(bookingId);
+//         const userEmail = await getUserEmailById(ticket.user_id);
+//         console.log("✅ User Email:", userEmail);
 
-        const userEmail =
-        await getUserEmailById(ticket.user_id);
+//         await connection.commit();
 
-        await connection.commit();
+//         console.log("✅ Transaction Committed");
 
-        /* ==========================
-           SEND EMAIL
-        ========================== */
+//         /* ==========================
+//         SEND EMAIL
+//         ========================== */
 
-        if (userEmail) {
+//         if (userEmail) {
 
-            sendTicketEmail(
-                ticket,
-                userEmail
-            ).catch(err =>
-                console.log(err)
-            );
+//             console.log("📧 Calling sendTicketEmail...");
 
-        }
+//             try {
 
-        return res.status(200).json({
+//                 await sendTicketEmail(ticket, userEmail);
 
-            success: true,
+//                 console.log("✅ sendTicketEmail finished");
 
-            message:
-                useRewards && redeemAmount > 0
-                    ? `Payment successful. ₹${redeemAmount} reward credits redeemed.`
-                    : "Payment successful.",
+//             } catch (error) {
 
-            bookingCode:
-                ticket.booking_code
+//                 console.error("❌ sendTicketEmail failed:", error);
 
-        });
+//             }
 
-    }
+//         } else {
 
-    catch (error) {
+//             console.log("❌ User email is null or undefined");
 
-        await connection.rollback();
+//         }
 
-        console.log(error);
+//         return res.status(200).json({
 
-        return res.status(500).json({
+//             success: true,
 
-            success: false,
+//             message:
+//                 useRewards && redeemAmount > 0
+//                     ? `Payment successful. ₹${redeemAmount} reward credits redeemed.`
+//                     : "Payment successful.",
 
-            message: error.message
+//             bookingCode:
+//                 ticket.booking_code
 
-        });
+//         });
 
-    }
+//     }
 
-    finally {
+//     catch (error) {
 
-        connection.release();
+//         await connection.rollback();
 
-    }
+//         console.log(error);
 
-};
+//         return res.status(500).json({
+
+//             success: false,
+
+//             message: error.message
+
+//         });
+
+//     }
+
+//     finally {
+
+//         connection.release();
+
+//     }
+
+// };
 
 export const getTicket = async (req, res) => {
   try {

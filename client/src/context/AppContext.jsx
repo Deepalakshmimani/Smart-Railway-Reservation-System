@@ -73,9 +73,15 @@ const fetchRecommendedTrains = async () => {
 
         const { data } = await axios.get(
 
-            `${backendUrl}/api/trains/recommended`
+            `${backendUrl}/api/trains/recommended`,
+
+            {
+                withCredentials: true
+            }
 
         );
+
+        console.log(data);
 
         if (data.success) {
 

@@ -4,6 +4,13 @@ import {
   createNotification
 } from "../utils/createNotifications.js";
 
+import { sendTicketEmail } from "../services/emailService.js";
+
+import {
+  getTicketData,
+  getUserEmailById,
+} from "../services/bookingService.js";
+
 
 // Finalize Booking
 
@@ -232,6 +239,10 @@ export const completePayment = async (req, res) => {
 
     await connection.commit();
 
+    /* =========================
+      AFTER PAYMENT SUCCESS
+    ========================= */
+
     if (paymentSuccess) {
 
       await createNotification(
@@ -239,6 +250,40 @@ export const completePayment = async (req, res) => {
         "Booking Confirmed",
         `Your booking ${booking.booking_code} has been confirmed.`
       );
+
+      try {
+
+        console.log("📩 Preparing confirmation email...");
+
+        const ticket = await getTicketData(bookingId);
+
+        if (!ticket) {
+          console.log("❌ Ticket data not found");
+        } else {
+
+          const userEmail = await getUserEmailById(ticket.user_id);
+
+          console.log("📧 User Email:", userEmail);
+
+          if (userEmail) {
+
+            await sendTicketEmail(ticket, userEmail);
+
+            console.log("✅ Booking confirmation email sent.");
+
+          } else {
+
+            console.log("❌ User email not found.");
+
+          }
+
+        }
+
+      } catch (error) {
+
+        console.error("❌ Failed to send booking email:", error);
+
+      }
 
     } else {
 
@@ -254,16 +299,11 @@ export const completePayment = async (req, res) => {
 
       success: paymentSuccess,
 
-      paymentStatus:
-        paymentSuccess
-          ? "SUCCESS"
-          : "FAILED",
+      paymentStatus: paymentSuccess ? "SUCCESS" : "FAILED",
 
-      rewardUsed:
-        paymentSuccess && useRewards,
+      rewardUsed: paymentSuccess && useRewards,
 
-      paymentExpiry:
-        booking.payment_expiry
+      paymentExpiry: booking.payment_expiry
 
     });
   }
