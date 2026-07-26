@@ -98,7 +98,7 @@ The backend follows the MVC architecture and implements database transactions, r
 - node-cron
 - Axios
 - PDFKit
-- Stripe
+
 
 ---
 
@@ -195,7 +195,6 @@ JWT_SECRET=your_secret
 EMAIL_USER=your_email
 EMAIL_PASS=your_password
 
-STRIPE_SECRET_KEY=your_key
 
 DIFY_API_KEY=your_key
 ```
