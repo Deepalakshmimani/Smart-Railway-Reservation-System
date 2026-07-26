@@ -1,16 +1,11 @@
 import React from "react";
-
 import { NavLink } from "react-router-dom";
-
 import "./Sidebar.css";
-
 import trainImg from "../assets/logo.avif";
-
 import { useAppContext } from "../context/AppContext";
-
 import toast from "react-hot-toast";
 
-function Sidebar() {
+function Sidebar({ openChatBot }) {
 
   const {
     user,
@@ -24,11 +19,10 @@ function Sidebar() {
 
     setUser(null);
 
-    toast.success(
-      "Logged out successfully..."
-    );
+    toast.success("Logged out successfully...");
 
     navigate("/");
+
   };
 
   return (
@@ -65,21 +59,22 @@ function Sidebar() {
 
       <ul className="sidebar-menu">
 
-        {
-          user&&
-          (<li>
+        {user && (
 
-          <NavLink
-            to="/dashboard"
-            className="menu-link"
-          >
+          <li>
 
-            Dashboard
+            <NavLink
+              to="/dashboard"
+              className="menu-link"
+            >
 
-          </NavLink>
+              Dashboard
 
-        </li>)
-        }
+            </NavLink>
+
+          </li>
+
+        )}
 
         <li>
 
@@ -94,16 +89,18 @@ function Sidebar() {
 
         </li>
 
+        {/* Chatbot */}
+
         <li>
 
-          <NavLink
-            to="/chat"
-            className="menu-link"
+          <button
+            className="menu-link sidebar-chat-btn"
+            onClick={openChatBot}
           >
 
-            Help / Chatbot
+            🤖 Help / Chatbot
 
-          </NavLink>
+          </button>
 
         </li>
 
@@ -129,7 +126,9 @@ function Sidebar() {
       </ul>
 
     </div>
+
   );
+
 }
 
 export default Sidebar;

@@ -6,6 +6,8 @@ import fs from "fs";
 import releaseExpiredBookings
 from "./jobs/releaseExpiredBookings.js";
 
+import chatbotRouter from "./routes/chatbotRoute.js";
+
 import userRouter from './routes/userRoute.js';
 import pool from './configs/db.js';
 import adminRouter from './routes/adminRoute.js';
@@ -77,6 +79,8 @@ app.use("/api/rewards", rewardRouter);
 app.use("/api/feedback",feedbackRouter);
 app.use("/api/seats", seatRouter);
 app.use("/api/pdf", pdfRouter);
+
+app.use("/api/chatbot", chatbotRouter);
 
 
 

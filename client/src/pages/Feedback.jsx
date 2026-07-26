@@ -115,7 +115,7 @@ const Feedback = () => {
 
             <p className="reward-text">
               Submit feedback and get
-              ₹10 reward credits 🎁
+              ₹5 reward credits 🎁
             </p>
 
             <form onSubmit={handleSubmit}>

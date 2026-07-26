@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from "react-hot-toast";
 
@@ -7,6 +7,7 @@ import Sidebar from './components/SideBar';
 import Footer from './components/Footer';
 import Login from './components/Login';
 import About from './components/About';
+import ChatBot from "./components/ChatBot";
 
 import Home from './pages/Home';
 import AllTrains from './pages/AllTrains';
@@ -37,21 +38,35 @@ import Dashboard from "./pages/Dashboard";
 import { useAppContext } from './context/AppContext';
 
 const App = () => {
+
   const isAdminPath = useLocation().pathname.includes("admin");
+
   const { showUserLogin } = useAppContext();
 
-  return (
-    <div>
-      {!isAdminPath && <Navbar />}
-      {!isAdminPath && <Sidebar />}
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
-      {showUserLogin && <Login />}
+  return (
+
+    <div>
+
+      {!isAdminPath &&
+        <Navbar />
+      }
+
+      {!isAdminPath &&
+        <Sidebar openChatBot={() => setIsChatOpen(true)} />
+      }
+
+      {showUserLogin &&
+        <Login />
+      }
 
       <Toaster />
 
       <div className="main-content">
+
         <Routes>
-          {/* Main User Routes */}
+
           <Route path='/' element={<Home />} />
           <Route path='/trains' element={<AllTrains />} />
           <Route path='/train/:trainId' element={<TrainDetails />} />
@@ -65,35 +80,60 @@ const App = () => {
           <Route path='/bookings' element={<MyBookings />} />
           <Route path='/cancel-ticket/:bookingId' element={<CancelBooking />} />
           <Route path='/about' element={<About />} />
-          <Route
-              path="/dashboard"
-              element={<Dashboard />}
-          />
+          <Route path='/dashboard' element={<Dashboard />} />
           <Route path='/feedback' element={<Feedback />} />
           <Route path='/notifications' element={<Notifications />} />
           <Route path='/profile' element={<Profile />} />
 
-          {/* Admin Routes */}
+          {/* Admin */}
+
           <Route path='/admin' element={<AdminLogin />} />
+
           <Route path='/admin/dashboard' element={<AdminLayout />}>
+
             <Route index element={<h1>Dashboard</h1>} />
+
             <Route path='trains' element={<TrainList />} />
+
             <Route path='add-train' element={<AddTrain />} />
+
             <Route path='update-train/:id' element={<AddTrain />} />
+
             <Route path='add-station' element={<AddStation />} />
+
             <Route path='update-station/:id' element={<AddStation />} />
+
             <Route path='stations' element={<ManageStations />} />
+
             <Route path='coaches' element={<CoachManagement />} />
+
             <Route path='add-coach' element={<AddCoach />} />
+
             <Route path='add-coach/:id' element={<AddCoach />} />
+
             <Route path='bookings' element={<Bookings />} />
+
           </Route>
+
         </Routes>
+
+        {!isAdminPath &&
+          <ChatBot
+            isOpen={isChatOpen}
+            setIsOpen={setIsChatOpen}
+          />
+        }
+
       </div>
 
-      {!isAdminPath && <Footer />}
+      {!isAdminPath &&
+        <Footer />
+      }
+
     </div>
+
   );
+
 };
 
 export default App;
