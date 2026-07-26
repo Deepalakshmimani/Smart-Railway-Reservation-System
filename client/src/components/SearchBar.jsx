@@ -44,7 +44,7 @@ const Search = ({onSearch}) => {
           onChange={handleChange}
         />
 
-        <button onClick={handleSearch}>Search</button>
+        <button className="search-button" onClick={handleSearch}>Search</button>
       </div>
     </div>
   );
