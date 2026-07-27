@@ -8,7 +8,7 @@ export const AppContext=createContext();
 export const AppCotextProvider=({children})=>
 {
 
-  const backendUrl = "http://localhost:4000";
+  const backendUrl = import.meta.env.VITE_API_URL;
   const navigate=useNavigate();
   const[user,setUser]=useState(null);
   const[isadmin,setIsAdmin]=useState(null);
