@@ -5,7 +5,7 @@ import { addStation, deleteStation, updateStation,getStations } from "../control
 const stationRouter=express.Router();
 
 
-stationRouter.post("/add",addStation);
+stationRouter.post("/add",authAdmin,addStation);
 
 stationRouter.put("/update/:id",authAdmin,updateStation);
 
