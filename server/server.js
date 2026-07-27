@@ -46,6 +46,10 @@ const allowedOrigins = [
 app.use(express.json());
 app.use(cookieParser());
 
+
+
+console.log("Allowed Origins:", allowedOrigins);
+
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
