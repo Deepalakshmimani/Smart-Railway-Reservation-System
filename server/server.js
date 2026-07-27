@@ -103,7 +103,7 @@ app.use("/api/chatbot", chatbotRouter);
 
 
 
-releaseExpiredBookings();
+//releaseExpiredBookings();
 app.listen(port,()=>
 {
   console.log(`Server started on port ${port}`);
