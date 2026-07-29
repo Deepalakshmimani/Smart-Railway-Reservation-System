@@ -189,23 +189,48 @@ export const confirmWaitingList = async (
        UPDATE PAYMENT
     ========================= */
 
-    await connection.execute(
-      `
-      UPDATE payments
-      SET
-          amount = ?,
-          status = 'SUCCESS',
-          transaction_id = ?,
-          payment_method = 'SYSTEM',
-          failure_reason = NULL
-      WHERE booking_id = ?
-      `,
-      [
-        totalAmount,
-        `WL${Date.now()}`,
-        waiting.booking_id,
-      ]
+    const [payment] = await connection.execute(
+    `
+    SELECT payment_id
+    FROM payments
+    WHERE booking_id=?
+    `,
+    [
+    waiting.booking_id
+    ]
     );
+
+    if(payment.length===0){
+
+      await createNotification(
+      connection,
+      waiting.user_id,
+      "Waiting List Confirmed",
+      "Your waiting list booking has been confirmed and seats have been allocated."
+      );
+
+    }else{
+
+    await connection.execute(
+    `
+    UPDATE payments
+    SET
+    amount=?,
+    status='SUCCESS',
+    transaction_id=?,
+    payment_method='SYSTEM',
+    failure_reason=NULL
+    WHERE booking_id=?
+    `,
+    [
+    totalAmount,
+    `WL${Date.now()}`,
+    waiting.booking_id
+    ]
+    );
+
+    }
+
 
     /* =========================
        CREATE NOTIFICATION
