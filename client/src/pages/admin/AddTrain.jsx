@@ -26,6 +26,7 @@ const AddTrain = () => {
 } = useAppContext();
 
   const [stations, setStations] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const [trainData, setTrainData] =
     useState({
@@ -154,9 +155,13 @@ const AddTrain = () => {
 
   /* Submit */
 
-  const handleSubmit = async(e) => {
+const handleSubmit = async (e) => {
 
     e.preventDefault();
+
+    if (loading) return;
+
+    setLoading(true);
 
     try {
 
@@ -211,6 +216,15 @@ const AddTrain = () => {
     } catch (error) {
 
         console.error(error);
+
+        toast.error(
+            error.response?.data?.message ||
+            "Something went wrong"
+        );
+
+    } finally {
+
+        setLoading(false);
 
     }
 
@@ -678,13 +692,28 @@ useEffect(() => {
           {/* Submit */}
 
           <button
-            type="submit"
-            className="submit-btn"
+              type="submit"
+              className="submit-btn"
+              disabled={loading}
+              style={{
+                  opacity: loading ? 0.6 : 1,
+                  cursor: loading ? "not-allowed" : "pointer"
+              }}
           >
 
-            {id
-              ? "Save Changes"
-              : "Add Train"}
+              {
+                  loading
+                  ? (
+                      id
+                      ? "Saving..."
+                      : "Adding Train..."
+                  )
+                  : (
+                      id
+                      ? "Save Changes"
+                      : "Add Train"
+                  )
+              }
 
           </button>
 
