@@ -40,7 +40,8 @@ const port=process.env.PORT || 4000;
 
 const allowedOrigins = [
     "http://localhost:5173",
-    process.env.FRONTEND_URL
+    process.env.FRONTEND_URL,
+    "https://smart-railway-reservation-system-dpc2wduxu.vercel.app"
 ];
 
 app.use(express.json());
