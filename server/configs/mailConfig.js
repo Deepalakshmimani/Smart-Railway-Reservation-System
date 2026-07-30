@@ -24,16 +24,19 @@
 //   }
 // });
 
+import dns from "dns";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
 dotenv.config();
 
+// Prefer IPv4 over IPv6
+dns.setDefaultResultOrder("ipv4first");
+
 export const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
-  secure: false, // Use STARTTLS
-  family: 4,     // Force IPv4
+  secure: false, // STARTTLS
 
   auth: {
     user: process.env.EMAIL_USER,
@@ -47,6 +50,9 @@ export const transporter = nodemailer.createTransport({
   tls: {
     rejectUnauthorized: false,
   },
+
+  logger: true,
+  debug: true,
 });
 
 // Verify SMTP connection on app initialization
