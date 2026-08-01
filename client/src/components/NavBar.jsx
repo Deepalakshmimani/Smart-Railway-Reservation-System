@@ -145,7 +145,7 @@ const fetchNotificationCount = async () => {
             className="navbar-auth-link"
           >
 
-            Login
+            Sign Up/Login
 
           </NavLink>
 
