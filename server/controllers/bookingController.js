@@ -12,6 +12,7 @@ import { confirmWaitingList } from "../utils/confirmWaitingList.js";
 import {
     markRecommendationDirty
 } from "../services/recommendationService.js";
+import { addToWaitingList } from "../services/waitingListService.js";
 
 
 
@@ -34,6 +35,69 @@ export const createBooking = async (req, res) => {
     const userId = req.user.id;
 
     const bookingCode = "BK" + Date.now();
+
+    const [seatCount] = await connection.execute(
+    `
+    SELECT COUNT(*) AS availableSeats
+    FROM seat_availability sa
+    JOIN seats s
+    ON sa.seat_id=s.seat_id
+    JOIN coaches c
+    ON s.coach_id=c.coach_id
+    WHERE
+    sa.schedule_id=?
+    AND c.coach_type=?
+    AND sa.status='AVAILABLE'
+    `,
+    [
+    scheduleId,
+    coachType
+    ]
+    );
+
+    const availableSeats =
+    seatCount[0].availableSeats;
+
+    if (
+    availableSeats <
+    passengers.length
+    ){
+
+    const waiting =
+    await addToWaitingList(
+    connection,
+    {
+    userId,
+    scheduleId,
+    coachType,
+    passengers,
+    totalAmount
+    }
+    );
+
+    await connection.commit();
+
+    return res.json({
+
+    success:true,
+
+    waiting:true,
+
+    bookingId:
+    waiting.bookingId,
+
+    bookingCode:
+    waiting.bookingCode,
+
+    waitingNumber:
+    waiting.waitingNumber,
+
+    message:
+    `Added to Waiting List (WL${waiting.waitingNumber})`
+
+    });
+
+    }
 
     // Payment expires in 5 minutes
     const paymentExpiry = new Date(
@@ -209,179 +273,7 @@ export const createBooking = async (req, res) => {
 
 
 
-// export const confirmPayment = async (req, res) => {
 
-//     const {
-//         bookingId,
-//         useRewards,
-//         redeemAmount
-//     } = req.body;
-
-//     const userId = req.user.id;
-
-//     const connection = await db.getConnection();
-
-//     try {
-
-//         await connection.beginTransaction();
-
-//         /* ==========================
-//            CONFIRM BOOKING
-//         ========================== */
-
-//         await updateBookingStatus(
-//             bookingId,
-//             "CONFIRMED",
-//             connection
-//         );
-
-//         /* ==========================
-//            REDEEM REWARD
-//         ========================== */
-
-//         if (useRewards && Number(redeemAmount) > 0) {
-
-//             const [[wallet]] =
-//             await connection.execute(
-//                 `
-//                 SELECT reward_credits
-//                 FROM users
-//                 WHERE user_id = ?
-//                 FOR UPDATE
-//                 `,
-//                 [userId]
-//             );
-
-//             if (!wallet) {
-
-//                 throw new Error("User not found");
-
-//             }
-
-//             if (
-//                 Number(wallet.reward_credits) <
-//                 Number(redeemAmount)
-//             ) {
-
-//                 throw new Error(
-//                     "Insufficient reward credits."
-//                 );
-
-//             }
-
-//             await connection.execute(
-//                 `
-//                 UPDATE users
-//                 SET reward_credits =
-//                     reward_credits - ?
-//                 WHERE user_id = ?
-//                 `,
-//                 [
-//                     redeemAmount,
-//                     userId
-//                 ]
-//             );
-
-//             await connection.execute(
-//                 `
-//                 INSERT INTO reward_transactions
-//                 (
-//                     user_id,
-//                     booking_id,
-//                     transaction_type,
-//                     amount,
-//                     description
-//                 )
-//                 VALUES
-//                 (
-//                     ?, ?, 'REDEEMED', ?, ?
-//                 )
-//                 `,
-//                 [
-//                     userId,
-//                     bookingId,
-//                     redeemAmount,
-//                     "Reward redeemed during ticket payment."
-//                 ]
-//             );
-
-//         }
-
-//         const ticket = await getTicketData(bookingId);
-//         console.log("✅ Ticket:", ticket);
-
-//         const userEmail = await getUserEmailById(ticket.user_id);
-//         console.log("✅ User Email:", userEmail);
-
-//         await connection.commit();
-
-//         console.log("✅ Transaction Committed");
-
-//         /* ==========================
-//         SEND EMAIL
-//         ========================== */
-
-//         if (userEmail) {
-
-//             console.log("📧 Calling sendTicketEmail...");
-
-//             try {
-
-//                 await sendTicketEmail(ticket, userEmail);
-
-//                 console.log("✅ sendTicketEmail finished");
-
-//             } catch (error) {
-
-//                 console.error("❌ sendTicketEmail failed:", error);
-
-//             }
-
-//         } else {
-
-//             console.log("❌ User email is null or undefined");
-
-//         }
-
-//         return res.status(200).json({
-
-//             success: true,
-
-//             message:
-//                 useRewards && redeemAmount > 0
-//                     ? `Payment successful. ₹${redeemAmount} reward credits redeemed.`
-//                     : "Payment successful.",
-
-//             bookingCode:
-//                 ticket.booking_code
-
-//         });
-
-//     }
-
-//     catch (error) {
-
-//         await connection.rollback();
-
-//         console.log(error);
-
-//         return res.status(500).json({
-
-//             success: false,
-
-//             message: error.message
-
-//         });
-
-//     }
-
-//     finally {
-
-//         connection.release();
-
-//     }
-
-// };
 
 export const getTicket = async (req, res) => {
   try {
@@ -668,6 +560,48 @@ export const cancelBooking = async (req, res) => {
             `,
             [bookingId]
         );
+
+        const [waitingRows] = await connection.execute(
+        `
+        SELECT waiting_number
+        FROM waiting_list
+        WHERE booking_id=?
+        AND status='WAITING'
+        FOR UPDATE
+        `,
+        [bookingId]
+        );
+
+        if (waitingRows.length > 0) {
+
+            const waitingNumber = waitingRows[0].waiting_number;
+
+            await connection.execute(
+            `
+            UPDATE waiting_list
+            SET status='CANCELLED'
+            WHERE booking_id=?
+            `,
+            [bookingId]
+            );
+
+            await connection.execute(
+            `
+            UPDATE waiting_list
+            SET waiting_number = waiting_number - 1
+            WHERE
+                schedule_id = ?
+                AND coach_type = ?
+                AND status='WAITING'
+                AND waiting_number > ?
+            `,
+            [
+                booking.schedule_id,
+                booking.coach_type,
+                waitingNumber
+            ]
+            );
+        }
 
         /* -----------------------------
            Release Seats

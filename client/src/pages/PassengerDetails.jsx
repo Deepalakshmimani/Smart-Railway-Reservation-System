@@ -103,8 +103,7 @@ const PassengerDetails = () => {
 
             );
 
-            console.log("Availability IDs:", availabilityIds);
-
+           
             const { data } = await axios.post(
 
                 `${backendUrl}/api/bookings/create`,

@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import "./Sidebar.css";
+import "./SideBar.css";
 import trainImg from "../assets/logo.avif";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";

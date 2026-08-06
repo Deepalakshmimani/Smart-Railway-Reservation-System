@@ -11,6 +11,11 @@ import {
   getUserEmailById,
 } from "../services/bookingService.js";
 
+import {
+    sendBookingEmailInBackground
+}
+from "../services/backgroundEmailService.js";
+
 
 // Finalize Booking
 
@@ -243,69 +248,40 @@ export const completePayment = async (req, res) => {
       AFTER PAYMENT SUCCESS
     ========================= */
 
-    if (paymentSuccess) {
+await connection.commit();
 
-      await createNotification(
+if (paymentSuccess) {
+
+    await createNotification(
         booking.user_id,
         "Booking Confirmed",
         `Your booking ${booking.booking_code} has been confirmed.`
-      );
+    );
 
-      try {
+    setImmediate(() => {
 
-        console.log("📩 Preparing confirmation email...");
-
-        const ticket = await getTicketData(bookingId);
-
-        if (!ticket) {
-          console.log("❌ Ticket data not found");
-        } else {
-
-          const userEmail = await getUserEmailById(ticket.user_id);
-
-          console.log("📧 User Email:", userEmail);
-
-          if (userEmail) {
-
-            await sendTicketEmail(ticket, userEmail);
-
-            console.log("✅ Booking confirmation email sent.");
-
-          } else {
-
-            console.log("❌ User email not found.");
-
-          }
-
-        }
-
-      } catch (error) {
-
-        console.error("❌ Failed to send booking email:", error);
-
-      }
-
-    } else {
-
-      await createNotification(
-        booking.user_id,
-        "Payment Failed",
-        `Payment failed. You can retry payment before the session expires.`
-      );
-
-    }
-
-    return res.json({
-
-      success: paymentSuccess,
-
-      paymentStatus: paymentSuccess ? "SUCCESS" : "FAILED",
-
-      rewardUsed: paymentSuccess && useRewards,
-
-      paymentExpiry: booking.payment_expiry
+        sendBookingEmailInBackground(bookingId);
 
     });
+
+}
+
+return res.json({
+
+    success: paymentSuccess,
+
+    paymentStatus:
+        paymentSuccess
+        ? "SUCCESS"
+        : "FAILED",
+
+    rewardUsed:
+        paymentSuccess && useRewards,
+
+    paymentExpiry:
+        booking.payment_expiry
+
+});
   }
   catch (error) {
 

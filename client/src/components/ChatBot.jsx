@@ -50,8 +50,7 @@ const ChatBot = ({ isOpen, setIsOpen }) => {
 
             const res = await axios.post(
 
-                "http://localhost:4000/api/chatbot/chat",
-
+                `${import.meta.env.VITE_API_URL}/api/chatbot/chat`,
                 {
                     message: userMessage,
                     conversation_id: conversationId

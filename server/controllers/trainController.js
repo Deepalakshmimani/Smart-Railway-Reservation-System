@@ -19,141 +19,13 @@ const __dirname = path.dirname(__filename);
 
 //Add Train
 
-export const addTrain =
-  async (req, res) => {
+export const addTrain = async (req, res) => {
 
-    const connection =
-      await db.getConnection();
+    const connection = await db.getConnection();
 
     try {
 
-      await connection.beginTransaction();
-
-      const {
-
-        train_name,
-        train_no,
-
-        source_station_id,
-        destination_station_id,
-
-        departure_time,
-        arrival_time,
-
-        running_days,
-
-        ac_sleeper_coaches,
-        sleeper_coaches,
-        chair_car_coaches,
-        general_coaches,
-
-        base_price
-
-      } = req.body;
-
-
-      const PRICE_MULTIPLIER = {
-
-          GENERAL:1,
-
-          CHAIR_CAR:1.25,
-
-          SLEEPER:1.5,
-
-          AC_SLEEPER:2.2
-
-      };
-
-
-      const general_price =
-      Number(base_price)
-      *
-      PRICE_MULTIPLIER.GENERAL;
-
-      const chair_car_price =
-      Number(base_price)
-      *
-      PRICE_MULTIPLIER.CHAIR_CAR;
-
-      const sleeper_price =
-      Number(base_price)
-      *
-      PRICE_MULTIPLIER.SLEEPER;
-
-      const ac_sleeper_price =
-      Number(base_price)
-      *
-      PRICE_MULTIPLIER.AC_SLEEPER;
-
-      /* Validation */
-
-      if (
-        !train_name ||
-        !train_no ||
-        !source_station_id ||
-        !destination_station_id ||
-        !departure_time ||
-        !arrival_time
-      ) {
-
-        return res.json({
-
-          success: false,
-          message:
-            "Missing Details"
-
-        });
-      }
-
-      /* Check Existing Train */
-
-      const [existingTrain] =
-        await connection.execute(
-
-          `SELECT *
-           FROM trains
-           WHERE train_no = ?`,
-
-          [train_no]
-        );
-
-      if (
-        existingTrain.length > 0
-      ) {
-
-        return res.json({
-
-          success: false,
-
-          message:
-            "Train already exists"
-
-        });
-      }
-
-      
-      /* Insert Train */
-      
-      const [trainResult] =
-        await connection.execute(
-
-          `INSERT INTO trains
-          (
-            train_name,
-            train_no,
-
-            source_station_id,
-            destination_station_id,
-
-            departure_time,
-            arrival_time,
-
-            running_days
-          )
-
-          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-
-          [
+        const {
 
             train_name,
             train_no,
@@ -164,98 +36,216 @@ export const addTrain =
             departure_time,
             arrival_time,
 
-            JSON.stringify(
-              running_days
-            )
-
-          ]
-        );
-
-      markRecommendationDirty();
-
-      const trainId =
-        trainResult.insertId;
-      
-
-        /* Generate Coaches*/
-
-      const coachIds =
-        await generateCoaches(
-
-          connection,
-
-          trainId,
-
-          {
+            running_days,
 
             ac_sleeper_coaches,
             sleeper_coaches,
             chair_car_coaches,
             general_coaches,
 
-            ac_sleeper_price,
-            sleeper_price,
-            chair_car_price,
-            general_price
+            base_price
 
-          }
+        } = req.body;
+
+        /* =========================
+           VALIDATION
+        ========================= */
+
+        if (
+            !train_name ||
+            !train_no ||
+            !source_station_id ||
+            !destination_station_id ||
+            !departure_time ||
+            !arrival_time
+        ) {
+
+            return res.json({
+                success: false,
+                message: "Missing Details"
+            });
+        }
+
+        /* =========================
+           CHECK TRAIN EXISTS
+        ========================= */
+
+        const [existingTrain] = await connection.execute(
+
+            `SELECT train_id
+             FROM trains
+             WHERE train_no = ?`,
+
+            [train_no]
+
         );
 
+        if (existingTrain.length > 0) {
 
+            return res.json({
+                success: false,
+                message: "Train already exists"
+            });
 
-      /* GENERATE SCHEDULES */
+        }
 
-      const scheduleIds =
-        await generateSchedules(
+        /* =========================
+           START TRANSACTION
+        ========================= */
 
-          connection,
+        await connection.beginTransaction();
 
-          trainId,
+        const PRICE_MULTIPLIER = {
 
-          running_days
+            GENERAL: 1,
+            CHAIR_CAR: 1.25,
+            SLEEPER: 1.5,
+            AC_SLEEPER: 2.2
+
+        };
+
+        const general_price =
+            Number(base_price) * PRICE_MULTIPLIER.GENERAL;
+
+        const chair_car_price =
+            Number(base_price) * PRICE_MULTIPLIER.CHAIR_CAR;
+
+        const sleeper_price =
+            Number(base_price) * PRICE_MULTIPLIER.SLEEPER;
+
+        const ac_sleeper_price =
+            Number(base_price) * PRICE_MULTIPLIER.AC_SLEEPER;
+
+        /* =========================
+           INSERT TRAIN
+        ========================= */
+
+        const [trainResult] = await connection.execute(
+
+            `INSERT INTO trains
+            (
+                train_name,
+                train_no,
+                source_station_id,
+                destination_station_id,
+                departure_time,
+                arrival_time,
+                running_days
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+
+            [
+
+                train_name,
+                train_no,
+
+                source_station_id,
+                destination_station_id,
+
+                departure_time,
+                arrival_time,
+
+                JSON.stringify(running_days)
+
+            ]
+
         );
 
-      /* GENERATE AVAILABILITY */
+        const trainId = trainResult.insertId;
 
-      await generateSeatAvailability(
+        markRecommendationDirty();
 
-        connection,
+        /* =========================
+           GENERATE COACHES
+        ========================= */
 
-        coachIds,
+        const coachIds = await generateCoaches(
 
-        scheduleIds
-      );
+            connection,
 
-      await connection.commit();
+            trainId,
 
-      return res.json({
+            {
 
-        success: true,
+                ac_sleeper_coaches,
+                sleeper_coaches,
+                chair_car_coaches,
+                general_coaches,
 
-        message:
-          "Train Added Successfully"
+                ac_sleeper_price,
+                sleeper_price,
+                chair_car_price,
+                general_price
 
-      });
+            }
 
-    } catch (error) {
+        );
 
-      await connection.rollback();
+        /* =========================
+           GENERATE SCHEDULES
+        ========================= */
 
-      console.log(error);
+        const scheduleIds = await generateSchedules(
 
-      return res.json({
+            connection,
+            trainId,
+            running_days
 
-        success: false,
-        message: error.message
+        );
 
-      });
+        /* =========================
+           GENERATE SEAT AVAILABILITY
+        ========================= */
 
-    } finally {
+        await generateSeatAvailability(
 
-      connection.release();
+            connection,
+            coachIds,
+            scheduleIds
+
+        );
+
+        /* =========================
+           COMMIT
+        ========================= */
+
+        await connection.commit();
+
+        return res.json({
+
+            success: true,
+            message: "Train Added Successfully"
+
+        });
+
     }
-  };
 
+    catch (error) {
+
+        console.log(error);
+
+        try {
+            await connection.rollback();
+        } catch (e) {
+            console.log("Rollback Error:", e.message);
+        }
+
+        return res.json({
+
+            success: false,
+            message: error.message
+
+        });
+
+    }
+
+    finally {
+
+        connection.release();
+
+    }
+
+};
 
 
 /* GET TRAINS */

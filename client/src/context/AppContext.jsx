@@ -1,6 +1,5 @@
 import { createContext,useContext,useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { allTrains } from "../assets/assets";
 import axios from "axios";
 
 export const AppContext=createContext();
@@ -8,7 +7,7 @@ export const AppContext=createContext();
 export const AppCotextProvider=({children})=>
 {
 
-  const backendUrl = "http://localhost:4000";
+  const backendUrl = import.meta.env.VITE_API_URL;
   const navigate=useNavigate();
   const[user,setUser]=useState(null);
   const[isadmin,setIsAdmin]=useState(null);
@@ -21,8 +20,6 @@ export const AppCotextProvider=({children})=>
   
 
   const handleSearch = async (formData) => {
-
-  console.log("Searching...", formData);
 
   if (!formData.from || !formData.to || !formData.date) {
     alert("Please fill all fields");
@@ -81,7 +78,6 @@ const fetchRecommendedTrains = async () => {
 
         );
 
-        console.log(data);
 
         if (data.success) {
 

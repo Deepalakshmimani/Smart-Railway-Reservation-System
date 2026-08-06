@@ -1,3 +1,7 @@
+import dns from "dns";
+
+dns.setDefaultResultOrder("ipv4first");
+
 import 'dotenv/config'
 import cookieParser from 'cookie-parser';
 import express from 'express';
@@ -38,13 +42,34 @@ const port=process.env.PORT || 4000;
 
 
 
-//allow multiple orgins
-const allowedOrigins=['http://localhost:5173'];
+const allowedOrigins = [
+    "http://localhost:5173",
+    process.env.FRONTEND_URL,
+    "https://smart-railway-reservation-system.vercel.app",
+    "https://smart-railway-reservation-system-dpc2wduxu.vercel.app"
+];
 
-//Middleware configuration
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({origin:allowedOrigins,credentials:true}))
+
+
+
+console.log("Allowed Origins:", allowedOrigins);
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true
+}));
+
+//Middleware configuration
+
+
 
 
 app.use((req, res, next) => {
@@ -87,6 +112,6 @@ app.use("/api/chatbot", chatbotRouter);
 releaseExpiredBookings();
 app.listen(port,()=>
 {
-  console.log(`Server is running on http://localhost:${port}`)
+  console.log(`Server started on port ${port}`);
   startRecommendationWorker();
 })

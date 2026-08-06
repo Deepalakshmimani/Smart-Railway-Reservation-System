@@ -1,47 +1,41 @@
 import jwt from "jsonwebtoken";
 
 export const authAdmin = async (req, res, next) => {
+    console.log("Cookies:", req.cookies);
 
     const { adminToken } = req.cookies;
 
-    console.log(req.cookies);
-
     if (!adminToken) {
-
         return res.json({
             success: false,
-            message: "Not Authorized"
+            message: "No adminToken"
         });
     }
 
     try {
+        const decoded = jwt.verify(adminToken, process.env.JWT_SECRET);
 
-        const tokenDecode = jwt.verify(
-            adminToken,
-            process.env.JWT_SECRET
-        );
+        console.log("Decoded:", decoded);
+        console.log("Env Email:", process.env.ADMIN_EMAIL);
 
-        if (tokenDecode.email===process.env.ADMIN_EMAIL) {
-
-           next();
-
-        } else {
-
-            return res.json({
-                success: false,
-                message: "Not Authorized"
-            });
+        if (decoded.email === process.env.ADMIN_EMAIL) {
+            console.log("✅ Auth Success");
+            return next();
         }
 
-        
-
-    } catch (error) {
-
-        console.log(error.message);
+        console.log("❌ Email Mismatch");
 
         return res.json({
             success: false,
-            message: error.message
+            message: "Email Mismatch"
+        });
+
+    } catch (err) {
+        console.log("JWT ERROR:", err);
+
+        return res.json({
+            success: false,
+            message: err.message
         });
     }
 };

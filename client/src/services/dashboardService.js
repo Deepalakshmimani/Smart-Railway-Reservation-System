@@ -1,11 +1,11 @@
 import axios from "axios";
 
-const API = "http://localhost:4000/api";
+const API = "https://smart-railway-reservation-system.onrender.com";
 
 export const getDashboard = async () => {
 
     const { data } = await axios.get(
-        `${API}/dashboard`,
+        `${API}/api/dashboard`,
         {
             withCredentials: true
         }
