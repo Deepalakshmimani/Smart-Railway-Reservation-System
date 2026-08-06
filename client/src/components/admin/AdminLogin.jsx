@@ -147,7 +147,7 @@ const AdminLogin = () => {
             </span>
 
             <span>
-              admin123
+              deepa@123
             </span>
 
           </div>
